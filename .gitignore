@@ -1,0 +1,9 @@
+.vscode/
+*.ipynb
+logs/*
+results/*
+__pycache__/
+.DS_Store
+.idea/
+data/*.csv
+data/*.json
