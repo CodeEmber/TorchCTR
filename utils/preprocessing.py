@@ -1,14 +1,13 @@
 '''
 Author       : wyx-hhhh
 Date         : 2023-10-28
-LastEditTime : 2023-10-30
+LastEditTime : 2024-02-27
 Description  : 
 '''
 import pandas as pd
 from torch.utils.data import Dataset, DataLoader
-import torch
-import copy
-import numpy as np
+from data.criteo.dataset import get_criteo_dataset
+from data.movie_len.dataset import MovieLenBaseDataset, get_movie_len_dataset
 
 from utils.file_utils import get_file_path
 from utils.middleware import config_middleware
@@ -17,65 +16,7 @@ from utils.logger import MyLogger
 logger = MyLogger()
 
 
-class CriteoBaseDataset(Dataset):
-
-    def __init__(self, df: pd.DataFrame, config: dict, enc_dict: dict = None):
-        self.config = config
-        self.df = df
-        self.enc_df = pd.DataFrame()
-        self.enc_dict = enc_dict
-        self.dense_cols = list(set(self.config["dense_cols"]))
-        self.sparse_cols = list(set(self.config["sparse_cols"]))
-        self.features_name = self.dense_cols + self.sparse_cols + ["label"]
-
-        if self.enc_dict is None:
-            self.enc_dict = self.get_enc_dict()
-        self.enc_data()
-
-    def get_enc_dict(self) -> dict:
-        self.enc_dict = dict(zip(list(self.dense_cols + self.sparse_cols), [dict() for _ in range(len(self.dense_cols + self.sparse_cols))]))
-        for col in self.sparse_cols:
-            self.df.loc[:, col] = self.df[col].astype(str)
-            us = self.df[col].unique()
-            self.enc_dict[col] = dict(zip(us, range(1, len(us) + 1)))
-            self.enc_dict[col]["vocab_size"] = len(us) + 1
-
-        for col in self.dense_cols:
-            self.df.loc[:, col] = self.df[col].astype(float)
-            self.enc_dict[col]["max"] = self.df.loc[:, col].max()
-            self.enc_dict[col]["min"] = self.df.loc[:, col].min()
-
-        return self.enc_dict
-
-    def enc_dense_data(self, col: str) -> int:
-        return (self.df.loc[:, col] - self.enc_dict[col]["min"]) / (self.enc_dict[col]["max"] - self.enc_dict[col]["min"])
-
-    def enc_sparse_data(self, col: str) -> np.ndarray:
-        return self.df.loc[:, col].map(self.enc_dict[col]).fillna(0).astype(int)
-
-    def enc_data(self):
-        self.enc_df = copy.deepcopy(self.df)
-        for col in self.dense_cols:
-            self.enc_df.loc[:, col] = self.enc_dense_data(col)
-        for col in self.sparse_cols:
-            self.enc_df.loc[:, col] = self.enc_sparse_data(col)
-
-    def __getitem__(self, index) -> dict:
-        data = dict()
-        for col in self.features_name:
-            if col in self.sparse_cols:
-                data[col] = torch.tensor(self.enc_df[col][index], dtype=torch.long).squeeze(-1)
-            elif col in self.dense_cols:
-                data[col] = torch.tensor(self.enc_df[col][index], dtype=torch.float32).squeeze(-1)
-            else:
-                data[col] = torch.tensor(self.enc_df[col][index]).squeeze(-1)
-        return data
-
-    def __len__(self):
-        return len(self.enc_df)
-
-
-class CriteoProcessData():
+class BaseProcessData():
 
     def __init__(self, config: dict) -> None:
         self.config = self.process_config(config)
@@ -104,8 +45,13 @@ class CriteoProcessData():
         logger.info("数据集切分完成，其中训练集、验证集、测试集的比例为：{:.1f}:{:.1f}:{:.1f}".format(self.config["train_ratio"], self.config["valid_ratio"], 1 - self.config["train_ratio"] - self.config["valid_ratio"]))
         return train_df, valid_df, test_df
 
-    def get_dataset(self, df: pd.DataFrame, enc_dict: dict = None) -> CriteoBaseDataset:
-        dataset = CriteoBaseDataset(df, self.config, enc_dict)
+    def get_dataset(self, data: pd.DataFrame, enc_dict: dict = None) -> Dataset:
+        if self.config["data"] == "criteo":
+            dataset = get_criteo_dataset(data, self.config, enc_dict)
+        elif self.config["data"] == "movielens":
+            dataset = get_movie_len_dataset(data, self.config, enc_dict)
+        else:
+            raise ValueError("数据集路径错误")
         return dataset
 
     def get_dataloader(self, dataset: Dataset, batch_size: int = 32, shuffle: bool = True):
@@ -122,3 +68,44 @@ class CriteoProcessData():
         test_dataloader = self.get_dataloader(test_dataset, batch_size=self.config["batch_size"], shuffle=False)
         logger.info("dataloader处理完成，其中训练集、验证集、测试集的batch_size为：{}:{}:{}".format(self.config["batch_size"], self.config["batch_size"], self.config["batch_size"]))
         return train_dataloader, valid_dataloader, test_dataloader, train_dataset.enc_dict
+
+
+class CriteoProcessData(BaseProcessData):
+
+    def __init__(self, config: dict) -> None:
+        super().__init__(config)
+
+    @staticmethod
+    @config_middleware()
+    def process_config(config):
+        return config
+
+
+class MovieLenProcessData(BaseProcessData):
+
+    def __init__(self, config: dict) -> None:
+        super().__init__(config)
+
+    @staticmethod
+    @config_middleware()
+    def process_config(config):
+        return config
+
+
+class ProcessData():
+
+    def __init__(self, config: dict) -> None:
+        self.config = config
+        self.data = self.get_data()
+
+    def get_data(self):
+        if self.config["data"] == "criteo":
+            data = CriteoProcessData(config=self.config)
+        elif self.config["data"] == "movielens":
+            data = MovieLenProcessData(config=self.config)
+        else:
+            raise ValueError("数据集错误")
+        return data
+
+    def data_process(self):
+        return self.data.data_process()

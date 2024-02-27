@@ -16,9 +16,9 @@ class Weed(nn.Module):
 
     def forward(self, x):
         sparse_emb_list = self.emb_layer(x)
-        sparse_emb = torch.stack(sparse_emb_list, axis=1).flatten(start_dim=1)
+        sparse_emb = torch.stack(sparse_emb_list, dim=1).flatten(start_dim=1)
         dense_input = get_linear_input(self.enc_dict, x)
-        dnn_input = torch.cat([sparse_emb, dense_input], axis=1)
+        dnn_input = torch.cat((sparse_emb, dense_input), dim=1)
         out = self.fc(dnn_input)
         return out
 
@@ -32,7 +32,7 @@ class Deep(nn.Module):
         hidden_units: List[int],
         hidden_activation: str | List[str],
         final_activation: str,
-        dropout_rate: float | List[str],
+        dropout_rate: float | List[float],
         batch_norm: bool = False,
         use_bias: bool = True,
     ):

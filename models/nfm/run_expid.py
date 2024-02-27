@@ -1,7 +1,7 @@
 '''
 Author       : wyx-hhhh
 Date         : 2023-10-28
-LastEditTime : 2023-10-31
+LastEditTime : 2024-02-27
 Description  : 
 '''
 
@@ -10,7 +10,7 @@ import os
 import torch
 
 from models.nfm import NFM, config
-from utils.preprocessing import CriteoProcessData
+from utils.preprocessing import ProcessData
 from utils.save_utils import save_all
 from utils.torch_utils import set_device
 from trainers.criteo_train import test_model, train_model, valid_model
@@ -18,9 +18,9 @@ from utils.logger import MyLogger
 
 logger = MyLogger()
 
-CriteoData = CriteoProcessData(config=config)
-config = CriteoData.config
-train_dataloader, valid_dataloader, test_dataloader, enc_dict = CriteoData.data_process()
+Data = ProcessData(config=config)
+config = Data.config
+train_dataloader, valid_dataloader, test_dataloader, enc_dict = Data.data_process()
 
 model = NFM(enc_dict=enc_dict)
 device = set_device(config['device'])
@@ -31,6 +31,7 @@ for i in range(config['epoch']):
     valid_metric = valid_model(model, valid_dataloader, device)
     save_all(
         model_name=config['model_name'],
+        data_name=config['data'],
         epoch=i,
         train_metric=train_metric,
         model=model,
@@ -43,4 +44,10 @@ for i in range(config['epoch']):
 
 test_metric = test_model(model, test_dataloader, device)
 logger.info(f"Test Metric: {test_metric}")
-save_all(model_name=config['model_name'], test_metric=test_metric, is_save_model=False, is_save_tensorboard=False)
+save_all(
+    model_name=config['model_name'],
+    data_name=config["data"],
+    test_metric=test_metric,
+    is_save_model=False,
+    is_save_tensorboard=False,
+)

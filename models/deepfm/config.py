@@ -1,15 +1,13 @@
 '''
 Author       : wyx-hhhh
 Date         : 2023-10-28
-LastEditTime : 2023-10-30
+LastEditTime : 2024-02-27
 Description  : 
 '''
 #参数配置
 config = {
     "model_name": "deepfm",
-    "data_path": ['data', 'criteo.csv'],
-    "sparse_cols": [f'C{x}' for x in range(1, 27)],
-    "dense_cols": [f'I{x}' for x in range(1, 14)],
+    "data": "criteo",
     "train_ratio": 0.7,
     "valid_ratio": 0.2,
     "debug_mode": True,

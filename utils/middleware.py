@@ -1,11 +1,11 @@
 '''
 Author       : wyx-hhhh
 Date         : 2023-10-28
-LastEditTime : 2023-10-30
+LastEditTime : 2024-02-27
 Description  : 
 '''
 
-from email.policy import default
+from data.data_config import DATA_CONFIG
 from utils.logger import MyLogger
 
 logger = MyLogger()
@@ -18,12 +18,11 @@ def config_middleware():
         def wrapper(config):
             if config is None:
                 raise ValueError("config is None")
-            required_params = ["data_path"]
+            required_params = []
             missing_params = [param for param in required_params if param not in config.keys()]
             # 设置默认值
             default_params = {
-                "sparse_cols": [f'C{x}' for x in range(1, 27)],
-                "dense_cols": [f'I{x}' for x in range(1, 14)],
+                "data": "criteo",
                 "train_ratio": 0.7,
                 "valid_ratio": 0.2,
                 "debug_mode": True,
@@ -38,7 +37,11 @@ def config_middleware():
                 if param not in config.keys():
                     config[param] = default_params[param]
                     logger.warning(f"缺少可选参数 {param}，设置默认值: {default_params[param]}")
-
+            if config["data"] == "criteo":
+                config.update(DATA_CONFIG["criteo"])
+            elif config["data"] == "movielens":
+                config.update(DATA_CONFIG["movielens"])
+            logger.info(f"配置读取成功，当前配置为: {config}")
             return func(config)
 
         return wrapper

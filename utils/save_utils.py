@@ -1,7 +1,7 @@
 '''
 Author       : wyx-hhhh
 Date         : 2023-10-28
-LastEditTime : 2023-10-30
+LastEditTime : 2024-02-27
 Description  : 
 '''
 import json
@@ -18,7 +18,7 @@ from utils.logger import MyLogger
 logger = MyLogger()
 
 
-def save_evaluation_results(model_name: str, metric: List[dict]):
+def save_evaluation_results(model_name: str, metric: List[dict], data_name: str):
     """保存模型评估结果
 
     Args:
@@ -35,7 +35,7 @@ def save_evaluation_results(model_name: str, metric: List[dict]):
         metric = temp_metric
     else:
         raise TypeError("metric的格式为List[dict]")
-    file_path = get_file_path(['results', model_name, 'evaluation.json'])
+    file_path = get_file_path(['results', model_name, f'evaluation_{data_name}.json'])
     try:
         with open(file_path, 'r+') as f:
             data = json.load(f)
@@ -47,7 +47,7 @@ def save_evaluation_results(model_name: str, metric: List[dict]):
             json.dump([metric], f)
 
 
-def save_model(model_name: str, model):
+def save_model(model_name: str, model, data_name: str):
     """保存模型
 
     Args:
@@ -56,11 +56,11 @@ def save_model(model_name: str, model):
     """
     if not os.path.exists((folder_path := get_file_path(['results', model_name, 'save_model']))):
         os.makedirs(folder_path)
-    file_path = get_file_path(['results', model_name, 'save_model', f'{model_name}.pth'])
+    file_path = get_file_path(['results', model_name, 'save_model', f'{model_name}_{data_name}.pth'])
     torch.save(model.state_dict(), file_path)
 
 
-def save_tensorboardx(model_name: str, epoch: int, train_metric: dict, valid_metric: dict):
+def save_tensorboardx(model_name: str, epoch: int, train_metric: dict, valid_metric: dict, data_name: str):
     """保存tensorboardx
 
     Args:
@@ -75,14 +75,15 @@ def save_tensorboardx(model_name: str, epoch: int, train_metric: dict, valid_met
     writer = SummaryWriter(log_path)
 
     for metric_name, metric_value in train_metric.items():
-        writer.add_scalar("train/" + metric_name, metric_value, epoch)
+        writer.add_scalar(f"{data_name}_train/" + metric_name, metric_value, epoch)
 
     for metric_name, metric_value in valid_metric.items():
-        writer.add_scalar("valid/" + metric_name, metric_value, epoch)
+        writer.add_scalar(f"{data_name}_valid/" + metric_name, metric_value, epoch)
 
 
 def save_all(
     model_name: str,
+    data_name: str = None,
     epoch: int = -1,
     is_save_model: bool = True,
     is_save_tensorboard: bool = True,
@@ -98,6 +99,7 @@ def save_all(
 
     Args:
         model_name (str): 模型名称，需要与run_expid.py中的model_name一致
+        data_name (str): 数据名称
         is_save_model (bool): 是否保存模型
         is_save_tensorboard (bool): 是否保存tensorboardx
         is_save_evaluation (bool): 是否保存评估结果
@@ -115,12 +117,23 @@ def save_all(
         logger.info(f"清空{model_name}的结果")
     check_folder(get_file_path(['results', model_name]))
     if is_save_model:
-        save_model(model_name=model_name, model=model)
+        save_model(
+            model_name=model_name,
+            model=model,
+            data_name=data_name,
+        )
     if is_save_tensorboard:
-        save_tensorboardx(model_name=model_name, epoch=epoch + 1, train_metric=train_metric, valid_metric=valid_metric)
+        save_tensorboardx(
+            model_name=model_name,
+            data_name=data_name,
+            epoch=epoch + 1,
+            train_metric=train_metric,
+            valid_metric=valid_metric,
+        )
     if is_save_evaluation:
         save_evaluation_results(
             model_name=model_name,
+            data_name=data_name,
             metric=[
                 {
                     'train': train_metric,
