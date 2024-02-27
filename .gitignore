@@ -1,9 +1,10 @@
 .vscode/
 *.ipynb
 logs/*
+!logs/.gitkeep
 results/*
+!results/.gitkeep
 __pycache__/
 .DS_Store
 .idea/
-data/*.csv
-data/*.json
+*.csv
