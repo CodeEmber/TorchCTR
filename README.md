@@ -46,15 +46,15 @@ conda env update -f=environment.yaml
 |   DeepFM   |                 DeepFM: A Factorization-Machine based Neural Network for CTR Prediction                 |
 |     NFM     |                      Neural Factorization Machines for Sparse Predictive Analytics                      |
 |   FiBiNET   | FiBiNET: Combining Feature Importance and Bilinear feature Interaction for Click-Through Rate Prediction |
+|     NCF     |                                     Neural Collaborative Filtering∗                                     |
 
 ---
 
 ## 📝 Todo List
 
-- [ ] 添加更多模型
 - [ ] 添加更多数据集
   - [ ] 添加Frappe数据集
-  - [ ] 添加MovieLens数据集
+  - [X] 添加MovieLens数据集
   - [ ] 添加Avazu数据集
   - [ ] 添加KDD12数据集
 - [ ] 修改main文件，使其支持命令行输入
