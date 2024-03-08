@@ -106,5 +106,5 @@ def get_linear_input(enc_dict: dict, data: dict) -> torch.Tensor:
     for col in enc_dict.keys():
         if 'min' in enc_dict[col].keys():
             res_data.append(data[col])
-    res_data = torch.stack(res_data, axis=1)
+    res_data = torch.stack(res_data, dim=1)
     return res_data

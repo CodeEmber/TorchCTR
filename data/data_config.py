@@ -1,7 +1,7 @@
 '''
 Author       : wyx-hhhh
 Date         : 2024-02-27
-LastEditTime : 2024-02-27
+LastEditTime : 2024-03-04
 Description  : 
 '''
 DATA_CONFIG = {
@@ -11,8 +11,10 @@ DATA_CONFIG = {
         "dense_cols": [f'I{x}' for x in range(1, 14)],
     },
     "movielens": {
-        "data_path": ['data', 'movielens', 'movielens.csv'],
-        "sparse_cols": ['userId', 'movieId'],
-        "dense_cols": ['rating'],
+        "behaviour_path": ['data', 'movielens', 'ml-1m.inter'],
+        "user_path": ['data', 'movielens', 'ml-1m.user'],
+        "item_path": ['data', 'movielens', 'ml-1m.item'],
+        "sparse_cols": ['user_id', 'item_id'],
+        "dense_cols": [],
     },
 }

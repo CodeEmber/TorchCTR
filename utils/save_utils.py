@@ -1,7 +1,7 @@
 '''
 Author       : wyx-hhhh
 Date         : 2023-10-28
-LastEditTime : 2024-02-27
+LastEditTime : 2024-03-05
 Description  : 
 '''
 import json
@@ -77,8 +77,9 @@ def save_tensorboardx(model_name: str, epoch: int, train_metric: dict, valid_met
     for metric_name, metric_value in train_metric.items():
         writer.add_scalar(f"{data_name}_train/" + metric_name, metric_value, epoch)
 
-    for metric_name, metric_value in valid_metric.items():
-        writer.add_scalar(f"{data_name}_valid/" + metric_name, metric_value, epoch)
+    if valid_metric:
+        for metric_name, metric_value in valid_metric.items():
+            writer.add_scalar(f"{data_name}_valid/" + metric_name, metric_value, epoch)
 
 
 def save_all(

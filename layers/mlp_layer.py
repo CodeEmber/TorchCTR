@@ -1,7 +1,7 @@
 '''
 Author       : wyx-hhhh
 Date         : 2023-10-28
-LastEditTime : 2023-11-10
+LastEditTime : 2024-03-05
 Description  : 
 '''
 from typing import List
@@ -15,10 +15,10 @@ class MLPLayer(nn.Module):
     def __init__(
         self,
         input_dim: int,
-        output_dim: int,
         hidden_units: List[int],
         hidden_activation: str | List[str],
         dropout_rate: float | List[float],
+        output_dim: int = 0,
         batch_norm: bool = False,
         use_bias: bool = True,
         final_activation: str = None,

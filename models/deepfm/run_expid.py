@@ -1,13 +1,14 @@
 '''
 Author       : wyx-hhhh
 Date         : 2023-10-28
-LastEditTime : 2024-02-27
+LastEditTime : 2024-03-05
 Description  : 
 '''
 
 import torch
 
-from models.deepfm import DeepFM, config
+from models.deepfm.model import DeepFM
+from models.deepfm.config import config
 from utils.preprocessing import ProcessData
 from utils.save_utils import save_all
 from utils.torch_utils import set_device

@@ -1,7 +1,7 @@
 '''
 Author       : wyx-hhhh
 Date         : 2023-10-28
-LastEditTime : 2024-02-27
+LastEditTime : 2024-03-05
 Description  : 
 '''
 
@@ -9,7 +9,8 @@ from datetime import time
 import os
 import torch
 
-from models.widedeep import WDL, config
+from models.widedeep.config import config
+from models.widedeep.model import WDL
 from utils.preprocessing import ProcessData
 from utils.save_utils import save_all
 from utils.torch_utils import set_device
