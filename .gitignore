@@ -10,3 +10,4 @@ __pycache__/
 *.csv
 ml-1m.*
 Amazon_Electronics.*
+.env
