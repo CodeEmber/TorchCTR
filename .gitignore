@@ -9,3 +9,4 @@ __pycache__/
 .idea/
 *.csv
 ml-1m.*
+Amazon_Electronics.*

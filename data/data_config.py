@@ -1,7 +1,7 @@
 '''
 Author       : wyx-hhhh
 Date         : 2024-02-27
-LastEditTime : 2024-03-04
+LastEditTime : 2024-03-19
 Description  : 
 '''
 DATA_CONFIG = {
@@ -16,5 +16,11 @@ DATA_CONFIG = {
         "item_path": ['data', 'movielens', 'ml-1m.item'],
         "sparse_cols": ['user_id', 'item_id'],
         "dense_cols": [],
+    },
+    "amazon": {
+        "behaviour_path": ['data', 'amazon', 'Amazon_Electronics.inter'],
+        "item_path": ['data', 'amazon', 'Amazon_Electronics.item'],
+        "sparse_cols": ['user_id', 'item_target_id', 'item_target_category'],
+        "history_cols": ['item_history_id', 'item_history_category'],
     },
 }
