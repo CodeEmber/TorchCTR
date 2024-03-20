@@ -54,10 +54,12 @@ conda env update -f=environment.yaml
 
 - [ ] 添加更多数据集
   - [ ] 添加Frappe数据集
+  - [X] 添加amazon数据集
   - [X] 添加MovieLens数据集
   - [ ] 添加Avazu数据集
   - [ ] 添加KDD12数据集
 - [ ] 修改main文件，使其支持命令行输入
+- [ ] 接入slack，方便查看程序运行情况
 
 ---
 
