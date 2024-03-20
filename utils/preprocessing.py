@@ -226,8 +226,8 @@ class AmazonProcessData(BaseProcessData):
         user_id_list = []
         item_target_id_list = []
         item_target_category_list = []
-        item_history_id_list = []
-        item_history_category_list = []
+        item_history_seq_id_list = []
+        item_history_seq_category_list = []
         if self.config['debug_mode']:
             all_user_list = pos_df['user_id'].unique()[:1000]
         else:
@@ -242,16 +242,16 @@ class AmazonProcessData(BaseProcessData):
                 item_target_category_list.append(id2category[pos_dict[user][i + 1]])
                 label_list.append(1)
                 if i < max_seq:
-                    item_history_id_list.append(pos_dict[user][:i] + [0] * (max_seq - i))
+                    item_history_seq_id_list.append(pos_dict[user][:i] + [0] * (max_seq - i))
                 else:
-                    item_history_id_list.append(pos_dict[user][i - max_seq:i])
-                item_history_category_list.append([id2category[item] for item in item_history_id_list[-1]])
+                    item_history_seq_id_list.append(pos_dict[user][i - max_seq:i])
+                item_history_seq_category_list.append([id2category[item] for item in item_history_seq_id_list[-1]])
 
                 for i in range(neg_sample_ratio):
                     user_id_list.append(user)
                     label_list.append(0)
-                    item_history_id_list.append(item_history_id_list[-1])
-                    item_history_category_list.append(item_history_category_list[-1])
+                    item_history_seq_id_list.append(item_history_seq_id_list[-1])
+                    item_history_seq_category_list.append(item_history_seq_category_list[-1])
 
                     temp_item_index = random.randint(0, item_num - 1)
                     while all_item_list[temp_item_index] in pos_dict[user]:
@@ -262,8 +262,8 @@ class AmazonProcessData(BaseProcessData):
             'user_id': user_id_list,
             'item_target_id': item_target_id_list,
             'item_target_category': item_target_category_list,
-            'item_history_id': item_history_id_list,
-            'item_history_category': item_history_category_list,
+            'item_history_seq_id': item_history_seq_id_list,
+            'item_history_seq_category': item_history_seq_category_list,
             'label': label_list,
         }
         logger.info("数据集构建完成,其中正样本数目为：{}，负样本数目为：{}".format(label_list.count(1), label_list.count(0)))
@@ -288,7 +288,6 @@ class AmazonProcessData(BaseProcessData):
         train_dataset = self.get_dataset(train_df)
         valid_dataset = self.get_dataset(valid_df, train_dataset.enc_dict)
         test_dataset = self.get_dataset(test_df, train_dataset.enc_dict)
-        print(train_dataset.__getitem__(666))
         train_dataloader = self.get_dataloader(train_dataset, batch_size=self.config["batch_size"], shuffle=True)
         valid_dataloader = self.get_dataloader(valid_dataset, batch_size=self.config["batch_size"], shuffle=False)
         test_dataloader = self.get_dataloader(test_dataset, batch_size=self.config["batch_size"], shuffle=False)

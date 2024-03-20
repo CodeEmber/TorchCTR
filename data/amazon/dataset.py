@@ -37,8 +37,8 @@ class AmazonBaseDataset(Dataset):
         self.enc_dict["user_id"] = {'vocab_size': self.df["user_id"].nunique() + 1, 'type': 'user'}
         self.enc_dict["item_target_id"] = {'vocab_size': self.df["item_target_id"].nunique() + 1, 'type': 'item'}
         self.enc_dict["item_target_category"] = {'vocab_size': self.df["item_target_category"].nunique() + 1, 'type': 'item'}
-        self.enc_dict["item_history_id"] = {'share_with': 'item_target_id', 'type': 'item'}
-        self.enc_dict["item_history_category"] = {'share_with': 'item_target_category', 'type': 'item'}
+        self.enc_dict["item_history_seq_id"] = {'share_with': 'item_target_id', 'type': 'item'}
+        self.enc_dict["item_history_seq_category"] = {'share_with': 'item_target_category', 'type': 'item'}
         return self.enc_dict
 
     def enc_data(self):

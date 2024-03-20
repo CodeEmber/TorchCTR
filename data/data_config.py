@@ -21,6 +21,6 @@ DATA_CONFIG = {
         "behaviour_path": ['data', 'amazon', 'Amazon_Electronics.inter'],
         "item_path": ['data', 'amazon', 'Amazon_Electronics.item'],
         "sparse_cols": ['user_id', 'item_target_id', 'item_target_category'],
-        "history_cols": ['item_history_id', 'item_history_category'],
+        "history_cols": ['item_history_seq_id', 'item_history_seq_category'],
     },
 }
