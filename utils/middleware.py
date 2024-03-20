@@ -1,7 +1,7 @@
 '''
 Author       : wyx-hhhh
 Date         : 2023-10-28
-LastEditTime : 2024-03-19
+LastEditTime : 2024-03-20
 Description  : 
 '''
 
@@ -46,7 +46,7 @@ def config_middleware():
                 config.update(DATA_CONFIG["amazon"])
             else:
                 raise ValueError(f"不支持的数据集: {config['data']}")
-            logger.info(f"配置读取成功，当前配置为: {config}")
+            logger.send_message(config, message_type=0, message_content_type=0)
             return func(config)
 
         return wrapper

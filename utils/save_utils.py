@@ -1,7 +1,7 @@
 '''
 Author       : wyx-hhhh
 Date         : 2023-10-28
-LastEditTime : 2024-03-05
+LastEditTime : 2024-03-20
 Description  : 
 '''
 import json
@@ -33,6 +33,8 @@ def save_evaluation_results(model_name: str, metric: List[dict], data_name: str)
                     if v is not None:
                         temp_metric[k] = v
         metric = temp_metric
+        metric.update({"model_name": model_name, "data_name": data_name})
+        logger.send_message(metric, message_type=0, message_content_type=0)
     else:
         raise TypeError("metric的格式为List[dict]")
     file_path = get_file_path(['results', model_name, f'evaluation_{data_name}.json'])

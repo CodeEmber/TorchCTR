@@ -1,23 +1,27 @@
 '''
 Author       : wyx-hhhh
 Date         : 2023-10-28
-LastEditTime : 2023-11-22
+LastEditTime : 2024-03-20
 Description  : 
 '''
 import subprocess
-from utils.file_utils import get_file_path
 from utils.logger import MyLogger
+import traceback
 
 logger = MyLogger()
 
-models = ["nfm"]
+models = ["deepfm"]
 for model in models:
     try:
         logger.info(f"开始运行{model}模型")
-        subprocess.run(f"python -m models.{model}.run_expid.py", shell=True)
+        logger.send_message(f"开始运行{model}模型", message_type=2)
+        subprocess.run(f"python -m models.{model}.run_expid", shell=True, check=True)
+        logger.send_message(f"运行{model}模型成功", message_type=2, mention=True)
+    except subprocess.CalledProcessError as e:
+        logger.error(f"运行{model}失败，错误信息如下：{e}")
+        continue
     except Exception as e:
-        logger.error(f"运行{model}失败")
-        logger.error(e)
+        logger.error(f"运行{model}失败，错误信息如下：{traceback.format_exc()}")
         continue
 
 # results_path = get_file_path(['results'])
