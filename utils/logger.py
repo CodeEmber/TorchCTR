@@ -13,6 +13,7 @@ from dotenv import load_dotenv
 from utils.file_utils import get_file_path
 from utils.time_utils import format_time
 
+# 读取敏感信息配置文件
 load_dotenv(get_file_path(path=["config", ".env"]))
 
 
@@ -72,35 +73,35 @@ class MyLogger:
             message (dict｜str): 消息内容
             message_type (int, optional): 消息类型. Defaults to 0. 0: info, 1: error, 2: success
             message_content_type (int, optional): 消息内容类型. Defaults to 0. 0: dict, 1: str
-            mention (bool, optional): 是否@自己. Defaults to False.当message_content_type为0时，mention无效
+            mention (bool, optional): 是否@自己. Defaults to False.
 
         Raises:
             ValueError: 只支持dict和str类型的消息内容, message_type只支持0, 1, 2
         """
-        headers = {"Content-type": "application/json"}
+        if self.slack_url and self.slack_user_id:
+            headers = {"Content-type": "application/json"}
+            if message_type == 0:
+                color = "#ecd452"
+            elif message_type == 1:
+                color = "#ff0000"
+            elif message_type == 2:
+                color = "#36a64f"
+            else:
+                raise ValueError("message_type只支持0, 1, 2，分别代表info, error, success")
 
-        if message_type == 0:
-            color = "#ecd452"
-        elif message_type == 1:
-            color = "#ff0000"
-        elif message_type == 2:
-            color = "#36a64f"
-        else:
-            raise ValueError("message_type只支持0, 1, 2，分别代表info, error, success")
+            if message_content_type == 0:
+                message = self._format_dict_message(message, color)
+            elif message_content_type == 1:
+                message = self._format_str_message(message, color)
+            else:
+                raise ValueError("message_content_type只支持0, 1，分别代表dict, str")
 
-        if message_content_type == 0:
-            message = self._format_dict_message(message, color)
-        elif message_content_type == 1:
-            message = self._format_str_message(message, color)
-        else:
-            raise ValueError("message_content_type只支持0, 1，分别代表dict, str")
+            if mention:
+                message_text = {"text": f"<@{self.slack_user_id}>", "attachments": message["attachments"]}
+            else:
+                message_text = message
 
-        if mention:
-            message_text = {"text": f"<@{self.slack_user_id}>", "attachments": message["attachments"]}
-        else:
-            message_text = message
-
-        requests.post(self.slack_url, headers=headers, json=message_text)
+            requests.post(self.slack_url, headers=headers, json=message_text)
 
 
 if __name__ == '__main__':
