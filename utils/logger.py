@@ -8,9 +8,12 @@ LastEditors  : Please set LastEditors
 import logging.config
 import requests
 import json
-
+import os
+from dotenv import load_dotenv
 from utils.file_utils import get_file_path
 from utils.time_utils import format_time
+
+load_dotenv(get_file_path(path=["config", ".env"]))
 
 
 class MyLogger:
@@ -19,7 +22,8 @@ class MyLogger:
         logger_path = get_file_path(path=["config", "logging.ini"])
         logging.config.fileConfig(logger_path)
         self.logger = logging.getLogger('test')
-        self.slack_user_id = "U0538E2BELX"
+        self.slack_user_id = os.getenv("SLACK_USER_ID")
+        self.slack_url = os.getenv("SLACK_URL")
 
     def debug(self, message):
         self.logger.debug(message)
@@ -37,14 +41,6 @@ class MyLogger:
     def _format_dict_message(self, message, color):
         if 'time' in message:
             message['time'] = format_time(message['time'])
-
-        # if 'epoch' in message:
-        #     epoch = message.pop('epoch')
-        #     message = {"epoch": epoch, **message}
-
-        # if 'model_name' in message:
-        #     model_name = message.pop('model_name')
-        #     message = {"model_name": model_name, **message}
 
         attachments = [{
             "color": color,
@@ -76,18 +72,12 @@ class MyLogger:
             message (dict｜str): 消息内容
             message_type (int, optional): 消息类型. Defaults to 0. 0: info, 1: error, 2: success
             message_content_type (int, optional): 消息内容类型. Defaults to 0. 0: dict, 1: str
-            mention (bool, optional): 是否@自己. Defaults to False.
+            mention (bool, optional): 是否@自己. Defaults to False.当message_content_type为0时，mention无效
 
         Raises:
             ValueError: 只支持dict和str类型的消息内容, message_type只支持0, 1, 2
         """
-        url = "https://hooks.slack.com/services/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"
         headers = {"Content-type": "application/json"}
-
-        if mention:
-            message_text = f"<@{self.slack_user_id}> {message}"
-        else:
-            message_text = message
 
         if message_type == 0:
             color = "#ecd452"
@@ -99,16 +89,21 @@ class MyLogger:
             raise ValueError("message_type只支持0, 1, 2，分别代表info, error, success")
 
         if message_content_type == 0:
-            message = self._format_dict_message(message_text, color)
+            message = self._format_dict_message(message, color)
         elif message_content_type == 1:
-            message = self._format_str_message(message_text, color)
+            message = self._format_str_message(message, color)
         else:
             raise ValueError("message_content_type只支持0, 1，分别代表dict, str")
 
-        requests.post(url, headers=headers, json=message)
+        if mention:
+            message_text = {"text": f"<@{self.slack_user_id}>", "attachments": message["attachments"]}
+        else:
+            message_text = message
+
+        requests.post(self.slack_url, headers=headers, json=message_text)
 
 
 if __name__ == '__main__':
     logger = MyLogger()
-    evaluation_results = {"time": "2023-10-28 10:00:00", "epoch": 5, "model_name": "ncf", "train": {"hitrate": 0.1, "ndcg": 0.2}, "valid": {"hitrate": 0.3, "ndcg": 0.4}}
-    logger.send_message(evaluation_results, message_type=1, mention=True)
+    evaluation_results = {"epoch": 5, "model_name": "ncf", "train": {"hitrate": 0.1, "ndcg": 0.2}, "valid": {"hitrate": 0.3, "ndcg": 0.4}}
+    logger.send_message(evaluation_results, message_type=2, message_content_type=0, mention=True)

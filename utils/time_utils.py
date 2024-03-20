@@ -1,7 +1,7 @@
 '''
 Author       : wyx-hhhh
 Date         : 2023-10-30
-LastEditTime : 2023-10-30
+LastEditTime : 2024-03-20
 Description  : 
 '''
 import time
@@ -26,5 +26,8 @@ def set_timestamp():
 
 def format_time(timestamp):
     """将时间戳转换为特定格式的时间字符串"""
-    time_obj = datetime.fromtimestamp(timestamp)
-    return time_obj.strftime("%Y-%m-%d %H:%M:%S")
+    if isinstance(timestamp, int):
+        time_obj = datetime.fromtimestamp(timestamp)
+        return time_obj.strftime("%Y-%m-%d %H:%M:%S")
+    else:
+        raise TypeError("timestamp的类型应为int")
