@@ -1,7 +1,7 @@
 '''
 Author       : wyx-hhhh
 Date         : 2023-10-28
-LastEditTime : 2024-03-19
+LastEditTime : 2024-03-21
 Description  : 
 '''
 from collections import defaultdict
@@ -27,19 +27,7 @@ class AmazonBaseDataset(Dataset):
         self.sparse_cols = list(set(self.config["sparse_cols"]))
         self.history_cols = list(set(self.config["history_cols"]))
         self.features_name = self.sparse_cols + self.history_cols + ["label"]
-
-        if self.enc_dict is None:
-            self.enc_dict = self.get_enc_dict()
         self.enc_data()
-
-    def get_enc_dict(self) -> dict:
-        self.enc_dict = dict(zip(list(self.sparse_cols + self.history_cols), [dict() for _ in range(len(self.sparse_cols + self.history_cols))]))
-        self.enc_dict["user_id"] = {'vocab_size': self.df["user_id"].nunique() + 1, 'type': 'user'}
-        self.enc_dict["item_target_id"] = {'vocab_size': self.df["item_target_id"].nunique() + 1, 'type': 'item'}
-        self.enc_dict["item_target_category"] = {'vocab_size': self.df["item_target_category"].nunique() + 1, 'type': 'item'}
-        self.enc_dict["item_history_seq_id"] = {'share_with': 'item_target_id', 'type': 'item'}
-        self.enc_dict["item_history_seq_category"] = {'share_with': 'item_target_category', 'type': 'item'}
-        return self.enc_dict
 
     def enc_data(self):
         self.enc_data_dict = defaultdict(lambda: np.array([]))

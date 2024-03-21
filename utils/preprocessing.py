@@ -1,7 +1,7 @@
 '''
 Author       : wyx-hhhh
 Date         : 2023-10-28
-LastEditTime : 2024-03-20
+LastEditTime : 2024-03-21
 Description  : 
 '''
 from cProfile import label
@@ -195,6 +195,19 @@ class AmazonProcessData(BaseProcessData):
     def __init__(self, config: dict) -> None:
         super().__init__(config)
 
+    def get_enc_dict(self, pos_df) -> dict:
+        """本数据集对应的enc_dict
+
+        Args:
+            pos_df (DataFram): 处理后的数据集
+        """
+        self.enc_dict = {}
+        self.enc_dict["user_id"] = {'vocab_size': pos_df['user_id'].nunique() + 1, 'type': 'user'}
+        self.enc_dict["item_target_id"] = {'vocab_size': pos_df['item_id'].nunique() + 1, 'type': 'item'}
+        self.enc_dict["item_target_category"] = {'vocab_size': pos_df['categories'].nunique() + 1, 'type': 'item'}
+        self.enc_dict["item_history_seq_id"] = {'share_with': 'item_target_id', 'type': 'item'}
+        self.enc_dict["item_history_seq_category"] = {'share_with': 'item_target_category', 'type': 'item'}
+
     def load_data(self):
         self.behaviour_df = pd.read_csv(get_file_path(self.config["behaviour_path"]), sep='\t')
         self.behaviour_df = self.behaviour_df.rename(columns={k: k.split(':')[0] for k in self.behaviour_df.columns})
@@ -229,7 +242,7 @@ class AmazonProcessData(BaseProcessData):
         item_history_seq_id_list = []
         item_history_seq_category_list = []
         if self.config['debug_mode']:
-            all_user_list = pos_df['user_id'].unique()[:1000]
+            all_user_list = pos_df['user_id'].unique()[:10]
         else:
             all_user_list = pos_df['user_id'].unique()
         all_item_list, item_num = pos_df['item_id'].unique(), pos_df['item_id'].nunique()
@@ -272,6 +285,7 @@ class AmazonProcessData(BaseProcessData):
 
     def split_data(self) -> tuple[pd.DataFrame, pd.DataFrame]:
         pos_df, pos_dict = self.load_data()
+        self.get_enc_dict(pos_df)
         data = self.construct_data(pos_df, pos_dict, 20, self.config["neg_sample_ratio"])
         train_df = data[:int(len(data) * self.config["train_ratio"])].reset_index(drop=True)
         valid_df = data[int(len(data) * self.config["train_ratio"]):int(len(data) * (self.config["train_ratio"] + self.config["valid_ratio"]))].reset_index(drop=True)
@@ -285,7 +299,7 @@ class AmazonProcessData(BaseProcessData):
 
     def data_process(self):
         train_df, valid_df, test_df = self.split_data()
-        train_dataset = self.get_dataset(train_df)
+        train_dataset = self.get_dataset(train_df, self.enc_dict)
         valid_dataset = self.get_dataset(valid_df, train_dataset.enc_dict)
         test_dataset = self.get_dataset(test_df, train_dataset.enc_dict)
         train_dataloader = self.get_dataloader(train_dataset, batch_size=self.config["batch_size"], shuffle=True)
