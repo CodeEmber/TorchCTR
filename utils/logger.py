@@ -2,7 +2,7 @@
 Description  : 日志文件配置
 Author       : wyx-hhhh
 Date         : 2022-01-24 17:26:50
-LastEditTime : 2024-03-20
+LastEditTime : 2024-03-21
 LastEditors  : Please set LastEditors
 '''
 import logging.config
@@ -104,7 +104,8 @@ class MyLogger:
             requests.post(self.slack_url, headers=headers, json=message_text)
 
 
-if __name__ == '__main__':
-    logger = MyLogger()
-    evaluation_results = {"epoch": 5, "model_name": "ncf", "train": {"hitrate": 0.1, "ndcg": 0.2}, "valid": {"hitrate": 0.3, "ndcg": 0.4}}
-    logger.send_message(evaluation_results, message_type=2, message_content_type=0, mention=True)
+logger = MyLogger()
+# if __name__ == '__main__':
+# logger = MyLogger()
+# evaluation_results = {"epoch": 5, "model_name": "ncf", "train": {"hitrate": 0.1, "ndcg": 0.2}, "valid": {"hitrate": 0.3, "ndcg": 0.4}}
+# logger.send_message(evaluation_results, message_type=2, message_content_type=0, mention=True)
