@@ -1,7 +1,7 @@
 '''
 Author       : wyx-hhhh
 Date         : 2024-03-08
-LastEditTime : 2024-03-08
+LastEditTime : 2024-03-20
 Description  : 
 '''
 import os
@@ -22,20 +22,8 @@ logger = MyLogger()
 
 Data = ProcessData(config=config)
 config = Data.config
+_, _, test_df = Data.data.split_data()
 train_dataloader, valid_dataloader, test_dataloader, enc_dict = Data.data_process()
-
-data_list = []
-
-for batch in test_dataloader:
-    # 假设每个 batch 包含 'user_id' 和 'label' 字段
-    user_ids = batch['user_id'].numpy()
-    labels = batch['label'].numpy()
-
-    for user_id, label in zip(user_ids, labels):
-        data_list.append({'user_id': user_id, 'label': label})
-
-# 将列表转换为 DataFrame
-test_df = pd.DataFrame(data_list)
 
 model = NCF(enc_dict=enc_dict)
 device = set_device(config['device'])
