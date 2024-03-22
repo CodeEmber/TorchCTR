@@ -1,7 +1,7 @@
 '''
 Author       : wyx-hhhh
 Date         : 2023-10-28
-LastEditTime : 2024-03-08
+LastEditTime : 2024-03-22
 Description  : 
 '''
 
@@ -9,17 +9,17 @@ import torch
 
 from models.ncf.config import config
 from models.ncf.model import NCF
-from utils.preprocessing import ProcessData
+from data.data_manager import DataManager
 from utils.save_utils import save_all
 from utils.torch_utils import set_device
 from trainers.movielens_train import train_model, test_model
-from utils.logger import MyLogger
+from utils.logger import logger
+from utils.utilities import get_values_by_keys
 
-logger = MyLogger()
-
-Data = ProcessData(config=config)
-config = Data.config
-train_dataloader, valid_dataloader, test_dataloader, enc_dict = Data.data_process()
+DataManager = DataManager(config=config)
+config = DataManager.config
+data_dict = DataManager.data_process()
+train_dataloader, valid_dataloader, test_dataloader, enc_dict = get_values_by_keys(data_dict, ['train_dataloader', 'valid_dataloader', 'test_dataloader', 'enc_dict'])
 
 model = NCF(enc_dict=enc_dict)
 device = set_device(config['device'])

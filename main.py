@@ -1,14 +1,12 @@
 '''
 Author       : wyx-hhhh
 Date         : 2023-10-28
-LastEditTime : 2024-03-20
+LastEditTime : 2024-03-22
 Description  : 
 '''
 import subprocess
-from utils.logger import MyLogger
+from utils.logger import logger
 import traceback
-
-logger = MyLogger()
 
 models = ["deepfm"]
 for model in models:

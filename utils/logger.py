@@ -2,7 +2,7 @@
 Description  : 日志文件配置
 Author       : wyx-hhhh
 Date         : 2022-01-24 17:26:50
-LastEditTime : 2024-03-21
+LastEditTime : 2024-03-22
 LastEditors  : Please set LastEditors
 '''
 import logging.config
@@ -11,7 +11,7 @@ import json
 import os
 from dotenv import load_dotenv
 from utils.file_utils import get_file_path
-from utils.time_utils import format_time
+from utils.utilities import format_time
 
 # 读取敏感信息配置文件
 load_dotenv(get_file_path(path=["config", ".env"]))

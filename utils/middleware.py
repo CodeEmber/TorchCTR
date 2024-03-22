@@ -1,14 +1,12 @@
 '''
 Author       : wyx-hhhh
 Date         : 2023-10-28
-LastEditTime : 2024-03-20
+LastEditTime : 2024-03-22
 Description  : 
 '''
 
 from data.data_config import DATA_CONFIG
-from utils.logger import MyLogger
-
-logger = MyLogger()
+from utils.logger import logger
 
 
 def config_middleware():

@@ -1,7 +1,7 @@
 '''
 Author       : wyx-hhhh
 Date         : 2023-10-28
-LastEditTime : 2024-03-20
+LastEditTime : 2024-03-22
 Description  : 
 '''
 import json
@@ -12,10 +12,8 @@ import torch
 from utils.file_utils import check_folder, get_file_path
 from torch.utils.tensorboard.writer import SummaryWriter
 
-from utils.time_utils import set_timestamp
-from utils.logger import MyLogger
-
-logger = MyLogger()
+from utils.utilities import set_timestamp
+from utils.logger import logger
 
 
 def save_evaluation_results(model_name: str, metric: List[dict], data_name: str):
