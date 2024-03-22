@@ -1,20 +1,14 @@
 '''
 Author       : wyx-hhhh
 Date         : 2023-10-28
-LastEditTime : 2023-11-24
+LastEditTime : 2024-03-22
 Description  : 
 '''
 import pandas as pd
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset
 import torch
 import copy
 import numpy as np
-
-from utils.file_utils import get_file_path
-from utils.middleware import config_middleware
-from utils.logger import MyLogger
-
-logger = MyLogger()
 
 
 class CriteoBaseDataset(Dataset):
