@@ -7,7 +7,7 @@ Description  :
 from trainers.base_train import BaseTrainer
 
 
-class MovieLensTrainer(BaseTrainer):
+class AmazonTrainer(BaseTrainer):
 
     def __init__(self):
-        super(MovieLensTrainer, self).__init__()
+        super(AmazonTrainer, self).__init__()
