@@ -19,6 +19,8 @@ DATA_CONFIG = {
         "item_path": ['data', 'amazon', 'Amazon_Electronics.item'],
         "sparse_cols": ['user_id', 'item_target_id', 'item_target_category'],
         "history_cols": ['item_history_seq_id', 'item_history_seq_category'],
-        "neg_sample_ratio": 3,
+        "neg_sample_ratio": 2,
+        "train_ratio": 0.8,
+        "valid_ratio": 0.1,
     },
 }

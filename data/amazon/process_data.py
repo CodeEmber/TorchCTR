@@ -1,7 +1,7 @@
 '''
 Author       : wyx-hhhh
 Date         : 2024-03-22
-LastEditTime : 2024-03-22
+LastEditTime : 2024-03-25
 Description  : 
 '''
 import random
@@ -123,5 +123,5 @@ class AmazonProcessData(BaseProcessData):
         return train_df, valid_df, test_df
 
     def get_dataset(self, data: pd.DataFrame, enc_dict: dict = None) -> Dataset:
-        dataset = get_amazon_dataset(data, self.config, enc_dict)
+        dataset = get_amazon_dataset(data, self.config, self.enc_dict)
         return dataset
