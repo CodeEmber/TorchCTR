@@ -6,32 +6,44 @@ LastEditTime : 2024-03-25
 LastEditors  : Please set LastEditors
 '''
 import logging.config
+from types import TracebackType
 import requests
 import json
 from config.global_config import GOLBAL_CONFIG
 from utils.file_utils import get_file_path
 from utils.utilities import format_time
+import inspect
+from logging import Logger
 
 
-class LoggerManager:
+class LoggerManager():
 
     def __init__(self, config) -> None:
         self.config = config
         logger_path = get_file_path(path=["config", "logging.ini"])
         logging.config.fileConfig(logger_path)
-        self.logger = logging.getLogger('test')
+        self.logger = logging.getLogger(GOLBAL_CONFIG.get('logger_level', 'test'))
 
-    def debug(self, message):
-        self.logger.debug(message)
+    def log(self, level, message):
+        frame_info = inspect.stack()[2]
+        file_name = frame_info.filename
+        file_name = file_name.split('/')[-2] + '/' + file_name.split('/')[-1]
+        line_number = frame_info.lineno
+        func_name = frame_info.function
+        log_message = f"[{file_name}:{line_number}:{func_name}] {message} "
+        self.logger.log(logging.getLevelName(level.upper()), log_message)
 
     def info(self, message):
-        self.logger.info(message)
+        self.log('info', message)
+
+    def debug(self, message):
+        self.log('debug', message)
 
     def warning(self, message):
-        self.logger.warning(message)
+        self.log('warning', message)
 
     def error(self, message):
-        self.logger.error(message)
+        self.log('error', message)
         self.send_message(message, message_type=1, mention=True)
 
     def _format_dict_message(self, message, color):
