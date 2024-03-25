@@ -11,3 +11,4 @@ __pycache__/
 ml-1m.*
 Amazon_Electronics.*
 .env
+global_config.py
