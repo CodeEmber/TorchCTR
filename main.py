@@ -5,7 +5,7 @@ LastEditTime : 2024-03-22
 Description  : 
 '''
 import subprocess
-from utils.logger import logger
+from managers.logger_manager import logger
 import traceback
 
 models = ["deepfm"]

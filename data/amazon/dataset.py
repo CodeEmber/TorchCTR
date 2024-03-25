@@ -11,7 +11,7 @@ import torch
 import copy
 import numpy as np
 
-from utils.logger import logger
+from managers.logger_manager import logger
 
 
 class AmazonBaseDataset(Dataset):

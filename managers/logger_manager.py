@@ -2,29 +2,24 @@
 Description  : 日志文件配置
 Author       : wyx-hhhh
 Date         : 2022-01-24 17:26:50
-LastEditTime : 2024-03-22
+LastEditTime : 2024-03-25
 LastEditors  : Please set LastEditors
 '''
 import logging.config
 import requests
 import json
-import os
-from dotenv import load_dotenv
+from config.global_config import GOLBAL_CONFIG
 from utils.file_utils import get_file_path
 from utils.utilities import format_time
 
-# 读取敏感信息配置文件
-load_dotenv(get_file_path(path=["config", ".env"]))
 
+class LoggerManager:
 
-class MyLogger:
-
-    def __init__(self) -> None:
+    def __init__(self, config) -> None:
+        self.config = config
         logger_path = get_file_path(path=["config", "logging.ini"])
         logging.config.fileConfig(logger_path)
         self.logger = logging.getLogger('test')
-        self.slack_user_id = os.getenv("SLACK_USER_ID")
-        self.slack_url = os.getenv("SLACK_URL")
 
     def debug(self, message):
         self.logger.debug(message)
@@ -78,7 +73,7 @@ class MyLogger:
         Raises:
             ValueError: 只支持dict和str类型的消息内容, message_type只支持0, 1, 2
         """
-        if self.slack_url and self.slack_user_id:
+        if self.config.get("is_slack_enabled") and self.config.get("slack_url") and self.config.get("slack_user_id"):
             headers = {"Content-type": "application/json"}
             if message_type == 0:
                 color = "#ecd452"
@@ -97,15 +92,15 @@ class MyLogger:
                 raise ValueError("message_content_type只支持0, 1，分别代表dict, str")
 
             if mention:
-                message_text = {"text": f"<@{self.slack_user_id}>", "attachments": message["attachments"]}
+                message_text = {"text": f"<@{self.config.get('slack_user_id')}>", "attachments": message["attachments"]}
             else:
                 message_text = message
 
-            requests.post(self.slack_url, headers=headers, json=message_text)
+            requests.post(self.config.get("slack_url"), headers=headers, json=message_text)
 
 
-logger = MyLogger()
+logger = LoggerManager(config=GOLBAL_CONFIG)
+
 # if __name__ == '__main__':
-# logger = MyLogger()
 # evaluation_results = {"epoch": 5, "model_name": "ncf", "train": {"hitrate": 0.1, "ndcg": 0.2}, "valid": {"hitrate": 0.3, "ndcg": 0.4}}
 # logger.send_message(evaluation_results, message_type=2, message_content_type=0, mention=True)

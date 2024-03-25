@@ -6,7 +6,7 @@ Description  :
 '''
 import pandas as pd
 from torch.utils.data import Dataset
-from utils.logger import logger
+from managers.logger_manager import logger
 from data.base_process_data import BaseProcessData
 from utils.file_utils import get_file_path
 from data.criteo.dataset import get_criteo_dataset

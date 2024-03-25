@@ -8,7 +8,7 @@ import random
 import pandas as pd
 from tqdm import tqdm
 from torch.utils.data import Dataset
-from utils.logger import logger
+from managers.logger_manager import logger
 from data.base_process_data import BaseProcessData
 from utils.file_utils import get_file_path
 from data.amazon.dataset import get_amazon_dataset

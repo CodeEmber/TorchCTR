@@ -1,19 +1,13 @@
 from torch.utils.data import Dataset, DataLoader
 import pandas as pd
-from utils.logger import logger
-from utils.middleware import config_middleware
+from managers.logger_manager import logger
 
 
 class BaseProcessData():
 
     def __init__(self, config: dict) -> None:
-        self.config = self.process_config(config)
+        self.config = config
         logger.info("配置读取成功")
-
-    @staticmethod
-    @config_middleware()
-    def process_config(config):
-        return config
 
     def split_data(self) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         raise NotImplementedError

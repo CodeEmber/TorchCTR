@@ -1,15 +1,13 @@
 '''
 Author       : wyx-hhhh
 Date         : 2023-10-28
-LastEditTime : 2024-02-27
+LastEditTime : 2024-03-25
 Description  : 
 '''
 #参数配置
-config = {
+train_config = {
     "model_name": "widedeep",
     "data": "criteo",
-    "train_ratio": 0.7,
-    "valid_ratio": 0.2,
     "debug_mode": True,
     "epoch": 5,
     "batch_size": 1024,

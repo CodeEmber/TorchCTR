@@ -1,15 +1,14 @@
 '''
 Author       : wyx-hhhh
 Date         : 2023-10-28
-LastEditTime : 2024-02-27
+LastEditTime : 2024-03-25
 Description  : 
 '''
 #参数配置
-config = {
-    "model_name": "fibinet",
-    "data": "criteo",
-    "train_ratio": 0.7,
-    "valid_ratio": 0.2,
+train_config = {
+    "model_name": "ncf",
+    "data": "movielens",
+    "neg_sample_ratio": 3,
     "debug_mode": True,
     "epoch": 5,
     "batch_size": 1024,
