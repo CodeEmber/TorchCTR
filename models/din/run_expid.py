@@ -1,7 +1,7 @@
 '''
 Author       : wyx-hhhh
 Date         : 2023-10-28
-LastEditTime : 2024-03-25
+LastEditTime : 2024-03-26
 Description  : 
 '''
 import torch
@@ -28,9 +28,11 @@ optimizer = torch.optim.Adam(model.parameters(), lr=config['lr'], betas=(0.9, 0.
 model = model.to(device)
 for i in range(config['epoch']):
     train_metric = TrainManager.train_model(model, train_dataloader, optimizer=optimizer, device=device)
+    valid_metric = TrainManager.valid_model(model, valid_dataloader, device=device)
     SaveManager.save_all(
         epoch=i,
         train_metric=train_metric,
+        valid_metric=valid_metric,
         model=model,
         is_clear=True,
     )
