@@ -8,9 +8,9 @@ Description  :
 train_config = {
     "model_name": "din",
     "data": "amazon",
-    "debug_mode": True,
-    "epoch": 5,
+    "debug_mode": False,
+    "epoch": 10,
     "batch_size": 1024,
     "lr": 0.0001,
-    "device": -1,
+    "device": 0,
 }
