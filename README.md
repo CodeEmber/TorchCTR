@@ -10,7 +10,7 @@ TorchCTR是使用Pytorch编写的点击率预测开源库，旨在帮助研究�
 
 ## 👋 Installation
 
-使用conda进行虚拟环境管理，可以使用下面的命令安装相关python库。
+使用conda进行虚拟环境管理，可以使用下面的命令安装相关python库，建议按照自己的实际情况来进行安装。
 
 ```bash
 conda env update -f=environment.yaml
@@ -47,6 +47,7 @@ conda env update -f=environment.yaml
 |     NFM     |                      Neural Factorization Machines for Sparse Predictive Analytics                      |
 |   FiBiNET   | FiBiNET: Combining Feature Importance and Bilinear feature Interaction for Click-Through Rate Prediction |
 |     NCF     |                                     Neural Collaborative Filtering∗                                     |
+|     DIN     |                         Deep Interest Network for Click-Through Rate Prediction                         |
 
 ---
 
@@ -59,7 +60,8 @@ conda env update -f=environment.yaml
   - [ ] 添加Avazu数据集
   - [ ] 添加KDD12数据集
 - [ ] 修改main文件，使其支持命令行输入
-- [ ] 接入slack，方便查看程序运行情况
+- [X] 接入slack，方便查看程序运行情况
+- [ ] 优化文档，更加详细的介绍该项目
 
 ---
 
