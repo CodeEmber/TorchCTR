@@ -7,13 +7,16 @@ Description  :
 import subprocess
 from managers.logger_manager import logger
 import traceback
+import os
 
-models = ["deepfm"]
+os.environ["MKL_THREADING_LAYER"] = "GNU"
+
+models = ["din"]
 for model in models:
     try:
         logger.info(f"开始运行{model}模型")
         logger.send_message(f"开始运行{model}模型", message_type=2)
-        subprocess.run(f"python -m models.{model}.run_expid", shell=True, check=True)
+        subprocess.run(f"python -m models.{model}.run_expid", shell=True)
         logger.send_message(f"运行{model}模型成功", message_type=2, mention=True)
     except subprocess.CalledProcessError as e:
         logger.error(f"运行{model}失败，错误信息如下：{e}")
