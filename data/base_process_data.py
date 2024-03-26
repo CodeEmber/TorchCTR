@@ -36,4 +36,5 @@ class BaseProcessData():
         result_dict["test_dataloader"] = test_dataloader
         result_dict["enc_dict"] = train_dataset.enc_dict
         logger.info("dataloader处理完成，其中训练集、验证集、测试集的batch_size为：{}:{}:{}".format(self.config["batch_size"], self.config["batch_size"], self.config["batch_size"]))
+        logger.send_message(message="数据处理处理完成", message_type=2, message_content_type=1)
         return result_dict

@@ -44,7 +44,7 @@ class SaveManager():
     def save_model(self, model, epoch):
         if not os.path.exists((folder_path := get_file_path(['results', self.model_name, 'save_model']))):
             os.makedirs(folder_path)
-        if epoch % 5 == 0 or epoch == self.config['epoch'] - 1:
+        if epoch % 2 == 0 or epoch == self.config['epoch'] - 1:
             file_path = get_file_path(['results', self.model_name, 'save_model', f'{self.model_name}_{self.data_name}_{set_timestamp()}.pth'])
             torch.save(model.state_dict(), file_path)
 
