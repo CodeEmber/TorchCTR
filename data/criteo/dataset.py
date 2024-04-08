@@ -1,7 +1,7 @@
 '''
 Author       : wyx-hhhh
 Date         : 2023-10-28
-LastEditTime : 2024-03-22
+LastEditTime : 2024-04-08
 Description  : 
 '''
 import pandas as pd
@@ -11,7 +11,7 @@ import copy
 import numpy as np
 
 
-class CriteoBaseDataset(Dataset):
+class CriteoDataset(Dataset):
 
     def __init__(self, df: pd.DataFrame, config: dict, enc_dict: dict = None):
         self.config = config
@@ -69,6 +69,6 @@ class CriteoBaseDataset(Dataset):
         return len(self.enc_df)
 
 
-def get_criteo_dataset(data: str, config: dict, enc_dict: dict) -> CriteoBaseDataset:
-    dataset = CriteoBaseDataset(data, config, enc_dict)
+def get_criteo_dataset(data: str, config: dict, enc_dict: dict) -> CriteoDataset:
+    dataset = CriteoDataset(data, config, enc_dict)
     return dataset

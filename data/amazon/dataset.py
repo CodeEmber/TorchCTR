@@ -1,7 +1,7 @@
 '''
 Author       : wyx-hhhh
 Date         : 2023-10-28
-LastEditTime : 2024-03-22
+LastEditTime : 2024-04-08
 Description  : 
 '''
 from collections import defaultdict
@@ -14,7 +14,7 @@ import numpy as np
 from managers.logger_manager import logger
 
 
-class AmazonBaseDataset(Dataset):
+class AmazonDataset(Dataset):
 
     def __init__(self, df: pd.DataFrame, config: dict, enc_dict: dict = None):
         self.config = config
@@ -47,6 +47,6 @@ class AmazonBaseDataset(Dataset):
         return len(self.df)
 
 
-def get_amazon_dataset(data: str, config: dict, enc_dict: dict) -> AmazonBaseDataset:
-    dataset = AmazonBaseDataset(data, config, enc_dict)
+def get_amazon_dataset(data: str, config: dict, enc_dict: dict) -> AmazonDataset:
+    dataset = AmazonDataset(data, config, enc_dict)
     return dataset

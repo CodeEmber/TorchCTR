@@ -1,7 +1,7 @@
 '''
 Author       : wyx-hhhh
 Date         : 2023-10-28
-LastEditTime : 2024-03-22
+LastEditTime : 2024-04-08
 Description  : 
 '''
 import pandas as pd
@@ -11,7 +11,7 @@ import copy
 import numpy as np
 
 
-class MovieLenBaseDataset(Dataset):
+class MovieLenDataset(Dataset):
 
     def __init__(self, df: pd.DataFrame, config: dict, enc_dict: dict = None):
         self.config = config
@@ -69,6 +69,6 @@ class MovieLenBaseDataset(Dataset):
         return len(self.enc_df)
 
 
-def get_movie_len_dataset(data: str, config: dict, enc_dict: dict) -> MovieLenBaseDataset:
-    dataset = MovieLenBaseDataset(data, config, enc_dict)
+def get_movie_len_dataset(data: str, config: dict, enc_dict: dict) -> MovieLenDataset:
+    dataset = MovieLenDataset(data, config, enc_dict)
     return dataset
