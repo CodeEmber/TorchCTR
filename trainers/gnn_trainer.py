@@ -1,17 +1,18 @@
 '''
 Author       : wyx-hhhh
-Date         : 2024-03-05
+Date         : 2024-04-11
 LastEditTime : 2024-04-11
 Description  : 
 '''
-from trainers.base_train import BaseTrainer
 from tqdm import tqdm
 
+from trainers.base_train import BaseTrainer
 
-class GowallaTrainer(BaseTrainer):
+
+class GraphNeuralNetworkTrainer(BaseTrainer):
 
     def __init__(self):
-        super(GowallaTrainer, self).__init__()
+        super(GraphNeuralNetworkTrainer, self).__init__()
 
     def train_model(self, model, train_loader, optimizer, device):
         model.train()
@@ -35,7 +36,8 @@ class GowallaTrainer(BaseTrainer):
         return epoch_loss
 
     def test_model(self, model, test_loader, device):
-        pass
+        return None
+
         # model.eval()
         # output = model(_,is_training=False)
         # user_embs = output['user_emb'].detach().cpu().numpy()

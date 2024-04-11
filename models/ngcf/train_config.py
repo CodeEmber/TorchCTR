@@ -8,6 +8,7 @@ Description  :
 train_config = {
     "model_name": "ngcf",
     "data": "gowalla",
+    "trainer": "gnn",
     "debug_mode": False,
     "epoch": 10,
     "batch_size": 32,

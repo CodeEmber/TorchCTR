@@ -1,13 +1,14 @@
 '''
 Author       : wyx-hhhh
 Date         : 2023-10-28
-LastEditTime : 2024-03-25
+LastEditTime : 2024-04-11
 Description  : 
 '''
 #参数配置
 train_config = {
     "model_name": "ncf",
     "data": "movielens",
+    "trainer": "dl",
     "neg_sample_ratio": 3,
     "debug_mode": True,
     "epoch": 5,
