@@ -1,3 +1,9 @@
+'''
+Author       : wyx-hhhh
+Date         : 2024-03-25
+LastEditTime : 2024-04-08
+Description  : 
+'''
 DATA_CONFIG = {
     "criteo": {
         "data_path": ['data', 'criteo', 'criteo.csv'],
@@ -22,5 +28,15 @@ DATA_CONFIG = {
         "neg_sample_ratio": 2,
         "train_ratio": 0.8,
         "valid_ratio": 0.1,
+    },
+    "gowalla": {
+        "origin_path": ['data', 'gowalla', 'loc-gowalla_totalCheckins.txt'],
+        "data_path": ['data', 'gowalla', 'gowalla.csv'],
+        "train_path": ['data', 'gowalla', 'train.csv'],
+        "test_path": ['data', 'gowalla', 'test.csv'],
+        "sparse_cols": ['user_id', 'item_id'],
+        "train_ratio": 0.8,
+        "user_num": 66447,
+        "item_num": 1242326,
     },
 }
