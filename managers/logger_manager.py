@@ -2,18 +2,16 @@
 Description  : 日志文件配置
 Author       : wyx-hhhh
 Date         : 2022-01-24 17:26:50
-LastEditTime : 2024-03-25
+LastEditTime : 2024-04-09
 LastEditors  : Please set LastEditors
 '''
 import logging.config
-from types import TracebackType
 import requests
 import json
 from config.global_config import GOLBAL_CONFIG
 from utils.file_utils import get_file_path
 from utils.utilities import format_time
 import inspect
-from logging import Logger
 
 
 class LoggerManager():
