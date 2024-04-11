@@ -23,7 +23,7 @@ logger = LoggerManager(config=config)
 DataManager = DataManager(config=config)
 data_dict = DataManager.data_process()
 test_df, test_dataloader, enc_dict = get_values_by_keys(data_dict, ['test_df', 'test_dataloader', 'enc_dict'])
-TrainManager = TrainManager(config=config)
+TrainManager = TrainManager(config=config).trainer
 
 model = NCF(enc_dict=enc_dict)
 device = set_device(config['device'])

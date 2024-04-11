@@ -18,7 +18,7 @@ logger = LoggerManager(config=config)
 DataManager = DataManager(config=config)
 data_dict = DataManager.data_process()
 train_dataloader, valid_dataloader, test_dataloader, enc_dict = get_values_by_keys(data_dict, ['train_dataloader', 'valid_dataloader', 'test_dataloader', 'enc_dict'])
-TrainManager = TrainManager(config=config)
+TrainManager = TrainManager(config=config).trainer
 SaveManager = SaveManager(config=config, logger=logger)
 
 model = WDL(enc_dict=enc_dict)
