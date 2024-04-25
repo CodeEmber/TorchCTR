@@ -1,7 +1,7 @@
 '''
 Author       : wyx-hhhh
 Date         : 2024-04-08
-LastEditTime : 2024-04-11
+LastEditTime : 2024-04-12
 Description  : 
 '''
 import os
@@ -74,6 +74,9 @@ class GowallaProcessData(BaseProcessData):
         result_dict['train_df'] = train_df
         result_dict['valid_df'] = valid_df
         result_dict['test_df'] = test_df
+        result_dict["train_grouped_data"] = train_dataset.grouped_data
+        result_dict["valid_grouped_data"] = valid_dataset.grouped_data if valid_dataset else None
+        result_dict["test_grouped_data"] = test_dataset.grouped_data
         result_dict["train_dataloader"] = train_dataloader
         result_dict["valid_dataloader"] = valid_dataloader
         result_dict["test_dataloader"] = test_dataloader
