@@ -1,7 +1,7 @@
 '''
 Author       : wyx-hhhh
 Date         : 2024-03-25
-LastEditTime : 2024-04-08
+LastEditTime : 2024-04-25
 Description  : 
 '''
 DATA_CONFIG = {
@@ -38,5 +38,14 @@ DATA_CONFIG = {
         "train_ratio": 0.8,
         "user_num": 66447,
         "item_num": 1242326,
+    },
+    "pixelrec": {
+        "behaviour_path": ['data', 'pixelrec', 'Pixel200K_inter.csv'],
+        "item_path": ['data', 'pixelrec', 'Pixel200K_item.csv'],
+        "sparse_cols": ['user_id', 'item_target_id', 'item_target_tag'],
+        "history_cols": ['item_history_seq_id', 'item_history_seq_tag'],
+        "neg_sample_ratio": 2,
+        "train_ratio": 0.8,
+        "valid_ratio": 0.1,
     },
 }
