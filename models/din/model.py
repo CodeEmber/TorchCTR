@@ -1,7 +1,7 @@
 '''
 Author       : wyx-hhhh
 Date         : 2024-03-04
-LastEditTime : 2024-03-25
+LastEditTime : 2024-05-14
 Description  : 
 '''
 from typing import List
@@ -48,7 +48,7 @@ class EmbeddingLayer(nn.Module):
     def forward(self, data):
         item_emb_list = []
         user_emb_list = []
-        history_emb_list = []
+        history_seq_list = []
         for col in self.item_cols:
             item_emb_list.append(self.embedding_dict[col](data[col]))
         item_emb = torch.cat(item_emb_list, dim=1).squeeze(1)
@@ -57,9 +57,9 @@ class EmbeddingLayer(nn.Module):
         user_emb = torch.cat(user_emb_list, dim=1)
 
         for col in self.history_cols:
-            history_emb_list.append(self.embedding_dict[self.enc_dict[col]['share_with']](data[col]))
-        history_emb = torch.cat(history_emb_list, dim=-1)
-        return user_emb, item_emb, history_emb
+            history_seq_list.append(self.embedding_dict[self.enc_dict[col]['share_with']](data[col]))
+        history_seq = torch.cat(history_seq_list, dim=-1)
+        return user_emb, item_emb, history_seq
 
 
 class Dice(nn.Module):
@@ -98,17 +98,17 @@ class DINAttentionLayer(nn.Module):
         self.batch_norm = nn.BatchNorm1d(self.embedding_dim)
 
     def get_mask(self, history_seq):
-        return (history_seq > 0).sum(dim=-1)
+        return (history_seq != 0).sum(dim=-1)
 
-    def forward(self, item_emb, history_emb):
+    def forward(self, item_emb, history_seq):
         # item_emb: (batch_size, embedding_dim)
-        # history_emb: (batch_size, history_len, embedding_dim)
-        mask = self.get_mask(history_emb)  # (batch_size, history_len)
-        history_seq_len = history_emb.size(1)
+        # history_seq: (batch_size, history_len, embedding_dim)
+        mask = self.get_mask(history_seq)  # (batch_size, history_len)
+        history_seq_len = history_seq.size(1)
 
-        item_emb = item_emb.unsqueeze(1).expand(-1, history_emb.size(1), -1)  # (batch_size, history_len, embedding_dim)
+        item_emb = item_emb.unsqueeze(1).expand(-1, history_seq.size(1), -1)  # (batch_size, history_len, embedding_dim)
         attention_input = torch.cat(
-            [item_emb, history_emb, item_emb - history_emb, item_emb * history_emb],
+            [item_emb, history_seq, item_emb - history_seq, item_emb * history_seq],
             dim=-1,
         )  # (batch_size, history_len, embedding_dim * 4)
 
@@ -116,7 +116,7 @@ class DINAttentionLayer(nn.Module):
         attention_weight = self.lr(self.hidden_activation(attention_input))  # (batch_size * history_len, 1)
         attention_weight = attention_weight.view(-1, history_seq_len)  # (batch_size, history_len)
         attention_weight = attention_weight * mask.float()
-        output = (attention_weight.unsqueeze(-1) * history_emb).sum(dim=1)  # (batch_size, embedding_dim)
+        output = (attention_weight.unsqueeze(-1) * history_seq).sum(dim=1)  # (batch_size, embedding_dim)
         return output
 
 
@@ -177,8 +177,8 @@ class DIN(nn.Module):
 
     def forward(self, data):
         # (batch_size, embedding_dim*user_label_num)，(batch_size, embedding_dim*item_label_num)，(batch_size, history_len, embedding_dim*item_label_num)
-        user_emb, item_emb, history_emb = self.embedding_layer(data)
-        attention_output = self.din_attention_layer(item_emb, history_emb)
+        user_emb, item_emb, history_seq = self.embedding_layer(data)
+        attention_output = self.din_attention_layer(item_emb, history_seq)
         mlp_input = torch.cat([user_emb, item_emb, attention_output], dim=1)
         mlp_output = self.mlp_layer(mlp_input)
         y_pred = mlp_output.sigmoid()
