@@ -14,3 +14,7 @@ Amazon_Electronics.*
 global_config.py
 nohup.out
 *.txt
+*.inter
+*.item
+*.mdb
+*.jpg
