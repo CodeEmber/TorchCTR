@@ -1,21 +1,19 @@
 '''
 Author       : wyx-hhhh
 Date         : 2024-03-22
-LastEditTime : 2024-04-11
+LastEditTime : 2024-05-22
 Description  : 
 '''
 from abc import abstractmethod
-from typing import List
 
-import torch
-import torch.nn as nn
-import numpy as np
-from torch.utils.data import Dataset, DataLoader
-from sklearn.metrics import log_loss, roc_auc_score
-from tqdm import tqdm
+from managers.evaluation_manager import EvaluationManager
 
 
 class BaseTrainer():
+
+    def __init__(self, config: dict, evaluation_manager: EvaluationManager):
+        self.config = config
+        self.evaluation_manager = evaluation_manager
 
     @abstractmethod
     def train_model(self, *args, **kwargs):

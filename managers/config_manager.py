@@ -1,7 +1,7 @@
 '''
 Author       : wyx-hhhh
 Date         : 2024-03-24
-LastEditTime : 2024-03-25
+LastEditTime : 2024-05-23
 Description  : 
 '''
 from config.data_config import DATA_CONFIG
@@ -20,9 +20,28 @@ class ConfigManager():
             "batch_size": 1024,
             "lr": 0.0001,
             "device": -1,
+            "metric_func": {
+                "train": [
+                    {
+                        "eval_func": "auc"
+                    },
+                    {
+                        "eval_func": "log_loss"
+                    },
+                ],
+                "eval": [
+                    {
+                        "eval_func": "ndcg",
+                        "k": [10, 20, 50]
+                    },
+                    {
+                        "eval_func": "gauc"
+                    },
+                ],
+            },
         }
         self.global_config = {}
-        self.required_params = ["data"]
+        self.required_params = ["data", "model_name", "trainer"]
 
     def _get_data_config(self):
         self.data_config = DATA_CONFIG.get(self.train_config.get('data'))

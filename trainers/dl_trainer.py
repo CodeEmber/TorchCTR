@@ -1,9 +1,7 @@
 import numpy as np
-from sklearn.metrics import log_loss, roc_auc_score
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
-from typing import List
 from tqdm import tqdm
 
 from trainers.base_train import BaseTrainer
@@ -11,8 +9,8 @@ from trainers.base_train import BaseTrainer
 
 class DeepLearningTrainer(BaseTrainer):
 
-    def __init__(self):
-        super(DeepLearningTrainer, self).__init__()
+    def __init__(self, config, evaluation_manager):
+        super(DeepLearningTrainer, self).__init__(config, evaluation_manager)
 
     def train_model(
         self,
@@ -20,7 +18,6 @@ class DeepLearningTrainer(BaseTrainer):
         train_loader: DataLoader,
         optimizer: torch.optim.Optimizer,
         device: torch.device,
-        metric_func: List[str] = ["roc_auc_score", "log_loss"],
     ):
         model.train()
         pred_list = []
@@ -38,17 +35,13 @@ class DeepLearningTrainer(BaseTrainer):
             pred_list.append(output_dict["y_pred"].detach().cpu().numpy())
             label_list.append(data["label"].detach().cpu().numpy())
             pbar.set_description(f"loss: {np.mean(loss_list):.4f}")
-        res_dict = dict()
-        for metric in metric_func:
-            try:
-                if metric == "roc_auc_score":
-                    res_dict[metric] = roc_auc_score(np.concatenate(label_list), np.concatenate(pred_list))
-                elif metric == "log_loss":
-                    res_dict[metric] = log_loss(np.concatenate(label_list), np.concatenate(pred_list), eps=1e-7)
-                else:
-                    res_dict[metric] = eval(metric)(np.concatenate(label_list), np.concatenate(pred_list))
-            except:
-                raise ValueError(f"metric_func must be roc_auc_score, log_loss or {metric}")
+
+        res_dict = self.evaluation_manager.get_eval_res(
+            label_list,
+            pred_list,
+            mode="train",
+        )
+
         return res_dict
 
     def valid_model(
@@ -56,7 +49,6 @@ class DeepLearningTrainer(BaseTrainer):
         model,
         valid_loader,
         device,
-        metric_func=["roc_auc_score", "log_loss"],
     ):
         model.eval()
         pred_list = []
@@ -72,17 +64,11 @@ class DeepLearningTrainer(BaseTrainer):
                 pred_list.append(output_dict["y_pred"].detach().cpu().numpy())
                 label_list.append(data["label"].detach().cpu().numpy())
                 pbar.set_description(f"loss: {np.mean(loss_list):.4f}")
-        res_dict = dict()
-        for metric in metric_func:
-            try:
-                if metric == "roc_auc_score":
-                    res_dict[metric] = roc_auc_score(np.concatenate(label_list), np.concatenate(pred_list))
-                elif metric == "log_loss":
-                    res_dict[metric] = log_loss(np.concatenate(label_list), np.concatenate(pred_list), eps=1e-7)
-                else:
-                    res_dict[metric] = eval(metric)(np.concatenate(label_list), np.concatenate(pred_list))
-            except:
-                raise ValueError(f"metric_func must be roc_auc_score, log_loss or {metric}")
+        res_dict = self.evaluation_manager.get_eval_res(
+            label_list,
+            pred_list,
+            mode="train",
+        )
         return res_dict
 
     def test_model(
@@ -90,7 +76,6 @@ class DeepLearningTrainer(BaseTrainer):
         model,
         test_loader,
         device,
-        metric_func=["roc_auc_score", "log_loss"],
     ):
         model.eval()
         pred_list = []
@@ -106,17 +91,11 @@ class DeepLearningTrainer(BaseTrainer):
                 pred_list.append(output_dict["y_pred"].detach().cpu().numpy())
                 label_list.append(data["label"].detach().cpu().numpy())
                 pbar.set_description(f"loss: {np.mean(loss_list):.4f}")
-        res_dict = dict()
-        for metric in metric_func:
-            try:
-                if metric == "roc_auc_score":
-                    res_dict[metric] = roc_auc_score(np.concatenate(label_list), np.concatenate(pred_list))
-                elif metric == "log_loss":
-                    res_dict[metric] = log_loss(np.concatenate(label_list), np.concatenate(pred_list), eps=1e-7)
-                else:
-                    res_dict[metric] = eval(metric)(np.concatenate(label_list), np.concatenate(pred_list))
-            except:
-                raise ValueError(f"metric_func must be roc_auc_score, log_loss or {metric}")
+        res_dict = self.evaluation_manager.get_eval_res(
+            label_list,
+            pred_list,
+            mode="train",
+        )
         return res_dict
 
     def get_test_predict(self, model, test_loader, device):

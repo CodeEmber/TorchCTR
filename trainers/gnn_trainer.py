@@ -1,7 +1,7 @@
 '''
 Author       : wyx-hhhh
 Date         : 2024-04-11
-LastEditTime : 2024-04-12
+LastEditTime : 2024-05-24
 Description  : 
 '''
 from tqdm import tqdm
@@ -12,8 +12,8 @@ from utils.evaluation import evaluate_recall
 
 class GraphNeuralNetworkTrainer(BaseTrainer):
 
-    def __init__(self):
-        super(GraphNeuralNetworkTrainer, self).__init__()
+    def __init__(self, config, evaluation_manager):
+        super(GraphNeuralNetworkTrainer, self).__init__(config, evaluation_manager)
 
     def train_model(self, model, train_loader, optimizer, device):
         model.train()

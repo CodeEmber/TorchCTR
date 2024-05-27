@@ -27,6 +27,7 @@ class SaveManager():
                             temp_metric[k] = v
             metric = temp_metric
             metric.update({"model_name": self.model_name, "data_name": self.data_name})
+            self.logger.info(f"评估结果: {metric}")
             self.logger.send_message(metric, message_type=0, message_content_type=0)
         else:
             raise TypeError("metric的格式为List[dict]")
