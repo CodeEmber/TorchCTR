@@ -1,7 +1,7 @@
 '''
 Author       : wyx-hhhh
 Date         : 2024-04-24
-LastEditTime : 2024-05-27
+LastEditTime : 2024-05-29
 Description  : 
 '''
 import torch
@@ -23,7 +23,7 @@ evaluation_manager = EvaluationManager(config=config, logger=logger)
 train_manager = TrainManager(config=config, evaluation_manager=evaluation_manager).trainer
 SaveManager = SaveManager(config=config, logger=logger)
 
-model = DDIN(enc_dict=enc_dict)
+model = DDIN(enc_dict=enc_dict, config=config)
 
 device = set_device(config['device'])
 optimizer = torch.optim.Adam(model.parameters(), lr=config['lr'], betas=(0.9, 0.999), eps=1e-08, weight_decay=0)

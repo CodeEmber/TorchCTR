@@ -1,3 +1,9 @@
+'''
+Author       : wyx-hhhh
+Date         : 2024-05-28
+LastEditTime : 2024-05-29
+Description  : 
+'''
 from torch.utils.data import Dataset, DataLoader
 import pandas as pd
 from managers.logger_manager import logger
@@ -16,7 +22,7 @@ class BaseProcessData():
         raise NotImplementedError
 
     def get_dataloader(self, dataset: Dataset, batch_size: int = 32, shuffle: bool = True):
-        dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=shuffle)
+        dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=shuffle, drop_last=True)
         return dataloader
 
     def data_process(self):

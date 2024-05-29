@@ -1,7 +1,7 @@
 '''
 Author       : wyx-hhhh
 Date         : 2023-10-28
-LastEditTime : 2024-03-27
+LastEditTime : 2024-05-29
 Description  : 
 '''
 import subprocess
@@ -12,13 +12,13 @@ import os
 
 os.environ["MKL_THREADING_LAYER"] = "GNU"
 
-models = ["din"]
+models = ["ddin"]
 for model in models:
     try:
         start_time = time.time()
         logger.info(f"开始运行{model}模型，开始时间：{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(start_time))}")
         logger.send_message(f"开始运行{model}模型，开始时间：{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(start_time))}", message_type=2)
-        subprocess.run(f"python -m models.{model}.run_expid", shell=True)
+        subprocess.run(f"python -m models.{model}.run_expid", shell=True, check=True)
         end_time = time.time()
         run_time = end_time - start_time
         hours, rem = divmod(run_time, 3600)

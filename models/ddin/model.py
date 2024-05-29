@@ -5,6 +5,8 @@ import torch.nn as nn
 from layers.mlp_layer import MLPLayer
 from utils.torch_utils import get_dnn_input_dim, get_linear_input, set_activation, set_loss_func
 
+model_config = {}
+
 
 class EmbeddingLayer(nn.Module):
 
@@ -159,6 +161,7 @@ class FMPlus(nn.Module):
         self.attention_factor = attention_factor
         self.embedding_dim = embedding_dim
         self.dropout_rate = dropout_rate
+        self.config = model_config
         self.attention_net = nn.Sequential(
             nn.Linear(self.embedding_dim, self.attention_factor),
             nn.ReLU(),
@@ -169,7 +172,7 @@ class FMPlus(nn.Module):
             self.dropout = nn.Dropout(self.dropout_rate)
 
     def forward(self, feature_emb_list):
-        feature_emb_list = [feature_emb_list[:, i * 16:(i + 1) * 16].view(1024, 1, 16) for i in range(5)]
+        feature_emb_list = [feature_emb_list[:, i * 16:(i + 1) * 16].view(self.config.get("batch_size", 1024), 1, 16) for i in range(5)]
         pair_feature = []
         for vi, vj in combinations(feature_emb_list, 2):
             pair_feature.append(vi * vj)
@@ -229,6 +232,7 @@ class DDIN(nn.Module):
 
     def __init__(
         self,
+        config: dict,
         enc_dict: dict = None,
         hidden_units: List[int] = [64, 32, 16],
         attention_units: List[int] = [32],
@@ -236,6 +240,8 @@ class DDIN(nn.Module):
         loss_func: str = "bce",
     ):
         super(DDIN, self).__init__()
+        global model_config
+        model_config = config
         self.enc_dict = enc_dict
         self.embedding_dim = embedding_dim
         self.hidden_units = hidden_units
