@@ -5,7 +5,6 @@ LastEditTime : 2024-05-29
 Description  : 
 '''
 import time
-from matplotlib.pylab import f
 import pynvml
 
 from managers.logger_manager import LoggerManager
@@ -14,18 +13,24 @@ from managers.logger_manager import LoggerManager
 class GPUMonitor():
 
     def __init__(self, config: dict, logger: LoggerManager) -> None:
-        pynvml.nvmlInit()
         self.config = config
         self.logger = logger
-        self.driver_version = pynvml.nvmlSystemGetDriverVersion()
-        self.cuda_version = pynvml.nvmlSystemGetCudaDriverVersion()
-        self.num_device = pynvml.nvmlDeviceGetCount()
-        self.gpu_info = {
-            "driver_version": "None",
-            "cuda_version": "None",
-            "num_device": "None",
-            "device": [],
-        }
+        try:
+            pynvml.nvmlInit()
+            self.driver_version = pynvml.nvmlSystemGetDriverVersion()
+            self.cuda_version = pynvml.nvmlSystemGetCudaDriverVersion()
+            self.num_device = pynvml.nvmlDeviceGetCount()
+            self.gpu_info = {
+                "driver_version": "None",
+                "cuda_version": "None",
+                "num_device": "None",
+                "device": [],
+            }
+            self.run()
+        except:
+            self.config["device"] = -1
+            self.logger.info("未检测到GPU设备")
+            self.logger.send_message("未检测到GPU设备，使用CPU", message_type=1, message_content_type=1)
 
     def get_gpu_info(self):
         self.gpu_info['driver_version'] = self.driver_version
@@ -71,8 +76,3 @@ class GPUMonitor():
                 self.logger.send_message("GPU资源不足，等待10分钟后重新检查", message_type=1, message_content_type=1)
                 time.sleep(600)
                 cycle_num -= 1
-
-
-# A = GPUMonitor({"a": 1})
-# A.get_gpu_info()
-# print(A.gpu_info)

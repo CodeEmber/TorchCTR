@@ -65,8 +65,7 @@ class ConfigManager():
         self._get_data_config()
         self._get_global_config()
         self.logger = LoggerManager(config=self.global_config)
-        self.gpu_monitor = GPUMonitor(config=self.train_config, logger=self.logger)
-        self.gpu_monitor.run()
+        GPUMonitor(config=self.train_config, logger=self.logger)
         self._check_params()
         all_config = {**self.global_config, **self.data_config, **self.train_config}
         self.logger.send_message({**self.data_config, **self.train_config}, message_type=0, message_content_type=0)
