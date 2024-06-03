@@ -1,7 +1,7 @@
 '''
 Author       : wyx-hhhh
 Date         : 2024-05-22
-LastEditTime : 2024-05-23
+LastEditTime : 2024-06-03
 Description  : 
 '''
 
@@ -59,8 +59,8 @@ class EvaluationManager():
 
     def get_eval_res(
         self,
-        y_true,
-        y_pred,
+        y_true=None,
+        y_pred=None,
         test_df=None,
         mode="train",
         metric_func=None,
@@ -75,21 +75,28 @@ class EvaluationManager():
             if mode == "train":
                 for metric in self.metric_func.get("train"):
                     if metric["eval_func"] == "auc":
-                        res_dict["auc"] = self.auc(y_true, y_pred)
+                        if y_true or y_pred:
+                            res_dict["auc"] = self.auc(y_true, y_pred)
+                        else:
+                            self.logger.info("y_true和y_pred为空，无法计算auc，可能是因为bach_size过大，数据过少，同时设置了drop_last=True")
                     elif metric["eval_func"] == "log_loss":
-                        res_dict["log_loss"] = self.logloss(y_true, y_pred)
+                        if y_true or y_pred:
+                            res_dict["log_loss"] = self.logloss(y_true, y_pred)
+                        else:
+                            self.logger.info("y_true和y_pred为空，无法计算log_loss，可能是因为bach_size过大，数据过少，同时设置了drop_last=True")
+
                     else:
                         raise ValueError("eval_func error")
             elif mode == "eval":
                 for metric in self.metric_func.get("eval"):
                     if metric["eval_func"] == "hitrate":
                         for k in metric["k"]:
-                            res_dict[f"hitrate@{k}"] = self.hitrate(test_df, col_name.get("user_col"), col_name.get("ranking_col"), col_name.get("label_col"), k)
+                            res_dict[f"hitrate@{k}"] = self.hitrate(test_df, self.col_name.get("user_col"), self.col_name.get("ranking_col"), self.col_name.get("label_col"), k)
                     elif metric["eval_func"] == "ndcg":
                         for k in metric["k"]:
-                            res_dict[f"ndcg@{k}"] = self.ndcg(test_df, col_name.get("user_col"), col_name.get("ranking_col"), col_name.get("label_col"), k)
+                            res_dict[f"ndcg@{k}"] = self.ndcg(test_df, self.col_name.get("user_col"), self.col_name.get("ranking_col"), self.col_name.get("label_col"), k)
                     elif metric["eval_func"] == "gauc":
-                        res_dict["gauc"] = self.gauc(test_df, col_name.get("user_col"), col_name.get("label_col"), col_name.get("pre_col"))
+                        res_dict["gauc"] = self.gauc(test_df, self.col_name.get("user_col"), self.col_name.get("label_col"), self.col_name.get("pre_col"))
                     else:
                         raise ValueError("eval_func error")
             else:
