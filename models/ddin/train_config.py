@@ -1,19 +1,19 @@
 '''
 Author       : wyx-hhhh
 Date         : 2024-04-24
-LastEditTime : 2024-05-29
+LastEditTime : 2024-06-03
 Description  : 
 '''
 #参数配置
 train_config = {
     "model_name": "ddin",
-    "data": "pixelrec",
+    "data": "amazon",
     "trainer": "dl",
     "debug_mode": False,
     "epoch": 50,
     "batch_size": 2048,
     "lr": 0.0001,
-    "device": -1,
+    "device": 0,
     "need_free_mem": 1000,
     "metric_func": {
         "train": [

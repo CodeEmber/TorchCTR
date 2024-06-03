@@ -290,7 +290,7 @@ class DDIN(nn.Module):
     def lr_reg(self, data):
         user_mba_l2 = self.MBA_Reg(data, 'user_id')
         item_mba_l2 = self.MBA_Reg(data, 'item_target_id')
-        tag_mba_l2 = self.MBA_Reg(data, 'item_target_tag')
+        tag_mba_l2 = self.MBA_Reg(data, 'item_target_tag' if 'item_target_tag' in data else 'item_target_category')
         return user_mba_l2 + item_mba_l2 + tag_mba_l2
 
     def forward(self, data):
