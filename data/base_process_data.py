@@ -1,7 +1,7 @@
 '''
 Author       : wyx-hhhh
 Date         : 2024-05-28
-LastEditTime : 2024-05-29
+LastEditTime : 2024-06-03
 Description  : 
 '''
 from torch.utils.data import Dataset, DataLoader
@@ -21,8 +21,8 @@ class BaseProcessData():
     def get_dataset(self, data: pd.DataFrame, enc_dict: dict = None) -> Dataset:
         raise NotImplementedError
 
-    def get_dataloader(self, dataset: Dataset, batch_size: int = 32, shuffle: bool = True):
-        dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=shuffle, drop_last=True)
+    def get_dataloader(self, dataset: Dataset, batch_size: int = 32, shuffle: bool = True, drop_last: bool = True) -> DataLoader:
+        dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=shuffle, drop_last=drop_last)
         return dataloader
 
     def data_process(self):
