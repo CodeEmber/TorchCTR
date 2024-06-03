@@ -46,7 +46,7 @@ class SaveManager():
         if not os.path.exists((folder_path := get_file_path(['results', self.model_name, 'save_model']))):
             os.makedirs(folder_path)
         if epoch % 2 == 0 or epoch == self.config['epoch'] - 1:
-            file_path = get_file_path(['results', self.model_name, 'save_model', f'{self.model_name}_{self.data_name}_{set_timestamp()}.pth'])
+            file_path = get_file_path(['results', self.model_name, 'save_model', f'{self.model_name}_{self.data_name}_{epoch}_{set_timestamp()}.pth'])
             torch.save(model.state_dict(), file_path)
 
     def save_tensorboardx(self, epoch: int, train_metric: dict, valid_metric: dict):
