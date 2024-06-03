@@ -1,7 +1,7 @@
 '''
 Author       : wyx-hhhh
 Date         : 2024-03-24
-LastEditTime : 2024-05-29
+LastEditTime : 2024-06-03
 Description  : 
 '''
 from config.data_config import DATA_CONFIG
@@ -61,6 +61,19 @@ class ConfigManager():
                 self.train_config[param] = self.default_train_config[param]
                 self.logger.warning(f"缺少可选参数 {param}，设置默认值: {self.default_train_config[param]}")
 
+    def _log_params(self, config):
+        if config["debug_mode"]:
+            self.logger.info("注意当前处于debug模式，数据集较小，仅用于调试")
+        else:
+            self.logger.info("注意当前不处于debug模式，数据集较大，用于正式训练")
+        if not config["debug_mode"] and config["epoch"] < 10:
+            self.logger.warning("非debug模式下，建议epoch至少设置为10")
+        self.logger.info(f"当前使用的模型: {config['model_name']}")
+        self.logger.info(f"当前使用的数据集: {config['data']}")
+        self.logger.info(f"当前使用的训练器: {config['trainer']}")
+        self.logger.info(f"当前使用的设备: {config['device']}")
+        self.logger.info(f"当前使用的metric_func: {config['metric_func']}")
+
     def get_config(self):
         self._get_data_config()
         self._get_global_config()
@@ -68,5 +81,6 @@ class ConfigManager():
         GPUMonitor(config=self.train_config, logger=self.logger)
         self._check_params()
         all_config = {**self.global_config, **self.data_config, **self.train_config}
+        self._log_params(all_config)
         self.logger.send_message({**self.data_config, **self.train_config}, message_type=0, message_content_type=0)
         return all_config
