@@ -2,7 +2,7 @@
 Description  : 日志文件配置
 Author       : wyx-hhhh
 Date         : 2022-01-24 17:26:50
-LastEditTime : 2024-04-09
+LastEditTime : 2024-06-05
 LastEditors  : Please set LastEditors
 '''
 import logging.config
@@ -84,29 +84,32 @@ class LoggerManager():
             ValueError: 只支持dict和str类型的消息内容, message_type只支持0, 1, 2
         """
         if self.config.get("is_slack_enabled") and self.config.get("slack_url") and self.config.get("slack_user_id"):
-            headers = {"Content-type": "application/json"}
-            if message_type == 0:
-                color = "#ecd452"
-            elif message_type == 1:
-                color = "#ff0000"
-            elif message_type == 2:
-                color = "#36a64f"
-            else:
-                raise ValueError("message_type只支持0, 1, 2，分别代表info, error, success")
+            try:
+                headers = {"Content-type": "application/json"}
+                if message_type == 0:
+                    color = "#ecd452"
+                elif message_type == 1:
+                    color = "#ff0000"
+                elif message_type == 2:
+                    color = "#36a64f"
+                else:
+                    raise ValueError("message_type只支持0, 1, 2，分别代表info, error, success")
 
-            if message_content_type == 0:
-                message = self._format_dict_message(message, color)
-            elif message_content_type == 1:
-                message = self._format_str_message(message, color)
-            else:
-                raise ValueError("message_content_type只支持0, 1，分别代表dict, str")
+                if message_content_type == 0:
+                    message = self._format_dict_message(message, color)
+                elif message_content_type == 1:
+                    message = self._format_str_message(message, color)
+                else:
+                    raise ValueError("message_content_type只支持0, 1，分别代表dict, str")
 
-            if mention:
-                message_text = {"text": f"<@{self.config.get('slack_user_id')}>", "attachments": message["attachments"]}
-            else:
-                message_text = message
+                if mention:
+                    message_text = {"text": f"<@{self.config.get('slack_user_id')}>", "attachments": message["attachments"]}
+                else:
+                    message_text = message
 
-            requests.post(self.config.get("slack_url"), headers=headers, json=message_text)
+                requests.post(self.config.get("slack_url"), headers=headers, json=message_text)
+            except Exception as e:
+                self.warning(f"发送消息失败，错误信息如下：{e}")
 
 
 logger = LoggerManager(config=GOLBAL_CONFIG)
