@@ -1,7 +1,7 @@
 '''
 Author       : wyx-hhhh
 Date         : 2023-10-28
-LastEditTime : 2024-05-27
+LastEditTime : 2024-06-12
 Description  : 
 '''
 #参数配置
@@ -22,15 +22,31 @@ train_config = {
             {
                 "eval_func": "log_loss"
             },
+            {
+                "eval_func": "rmse"
+            },
+        ],
+        "valid": [
+            {
+                "eval_func": "auc"
+            },
+            {
+                "eval_func": "log_loss"
+            },
+            {
+                "eval_func": "rmse"
+            },
         ],
         "eval": [
             {
-                "eval_func": "ndcg",
-                "k": [10]
-            },
-            {
-                "eval_func": "gauc"
+                "eval_func": "rmse"
             },
         ],
+    },
+    "col_name": {
+        "user_col": "user_id",
+        "ranking_col": "ranking",
+        "label_col": "label",
+        "pre_col": "prediction",
     },
 }

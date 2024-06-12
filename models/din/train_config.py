@@ -1,7 +1,7 @@
 '''
 Author       : wyx-hhhh
 Date         : 2023-10-28
-LastEditTime : 2024-05-23
+LastEditTime : 2024-06-12
 Description  : 
 '''
 #参数配置
@@ -21,6 +21,20 @@ train_config = {
             },
             {
                 "eval_func": "log_loss"
+            },
+            {
+                "eval_func": "gauc"
+            },
+        ],
+        "valid": [
+            {
+                "eval_func": "auc"
+            },
+            {
+                "eval_func": "log_loss"
+            },
+            {
+                "eval_func": "gauc"
             },
         ],
         "eval": [

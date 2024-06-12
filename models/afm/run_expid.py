@@ -1,7 +1,7 @@
 '''
 Author       : wyx-hhhh
 Date         : 2024-05-27
-LastEditTime : 2024-05-27
+LastEditTime : 2024-06-12
 Description  : 
 '''
 import torch
@@ -39,6 +39,7 @@ for i in range(config['epoch']):
     )
     logger.info(f"Epoch: {i + 1}")
     logger.info(f"Train Metric: {train_metric}")
+    logger.info(f"Valid Metric: {valid_metric}")
 
 test_metric = train_manager.test_model(model, test_dataloader, device)
 logger.info(f"Test Metric: {test_metric}")

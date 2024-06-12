@@ -1,7 +1,7 @@
 '''
 Author       : wyx-hhhh
 Date         : 2024-04-11
-LastEditTime : 2024-05-24
+LastEditTime : 2024-06-12
 Description  : 
 '''
 from tqdm import tqdm
@@ -34,7 +34,11 @@ class GraphNeuralNetworkTrainer(BaseTrainer):
 
             epoch_loss += loss.item()
             pbar.set_description("Loss {}".format(round(epoch_loss, 4)))
-        return {"loss": epoch_loss / len(train_loader)}
+        res_dict = self.evaluation_manager.get_eval_res(
+            loss=epoch_loss / len(train_loader),
+            mode="train",
+        )
+        return res_dict
 
     def test_model(self, model, train_gd, test_gd, hidden_size, top_n=50):
         model.eval()
@@ -55,7 +59,7 @@ class GraphNeuralNetworkTrainer(BaseTrainer):
             batch_user_emb = user_embs[user_ids, :]
             D, I = faiss_index.search(batch_user_emb, 1000)
 
-            for i, iid_list in enumerate(user_ids):  # 每个用户的label列表，此处item_id为一个二维list，验证和测试是多label的
+            for i, uid_list in enumerate(user_ids):  # 每个用户的label列表，此处item_id为一个二维list，验证和测试是多label的
                 train_items = train_gd.get(user_ids[i], [])
                 preds[user_ids[i]] = [x for x in list(I[i, :]) if x not in train_items]
         return evaluate_recall(preds, test_gd, top_n)

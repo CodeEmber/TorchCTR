@@ -1,7 +1,7 @@
 '''
 Author       : wyx-hhhh
 Date         : 2024-04-24
-LastEditTime : 2024-06-03
+LastEditTime : 2024-06-05
 Description  : 
 '''
 #参数配置
@@ -15,6 +15,7 @@ train_config = {
     "lr": 0.0001,
     "device": 0,
     "need_free_mem": 1000,
+    "drop_last": True,
     "metric_func": {
         "train": [
             {
