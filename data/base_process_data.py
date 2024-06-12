@@ -1,7 +1,7 @@
 '''
 Author       : wyx-hhhh
 Date         : 2024-05-28
-LastEditTime : 2024-06-03
+LastEditTime : 2024-06-05
 Description  : 
 '''
 from torch.utils.data import Dataset, DataLoader
@@ -31,9 +31,9 @@ class BaseProcessData():
         train_dataset = self.get_dataset(train_df)
         valid_dataset = None if valid_df.empty else self.get_dataset(valid_df, train_dataset.enc_dict)
         test_dataset = self.get_dataset(test_df, train_dataset.enc_dict)
-        train_dataloader = self.get_dataloader(train_dataset, batch_size=self.config["batch_size"], shuffle=True)
-        valid_dataloader = None if valid_df.empty else self.get_dataloader(valid_dataset, batch_size=self.config["batch_size"], shuffle=False)
-        test_dataloader = self.get_dataloader(test_dataset, batch_size=self.config["batch_size"], shuffle=False)
+        train_dataloader = self.get_dataloader(train_dataset, batch_size=self.config["batch_size"], shuffle=True, drop_last=self.config.get("drop_last", False))
+        valid_dataloader = None if valid_df.empty else self.get_dataloader(valid_dataset, batch_size=self.config["batch_size"], shuffle=False, drop_last=self.config.get("drop_last", False))
+        test_dataloader = self.get_dataloader(test_dataset, batch_size=self.config["batch_size"], shuffle=False, drop_last=self.config.get("drop_last", False))
         result_dict['train_df'] = train_df
         result_dict['valid_df'] = valid_df
         result_dict['test_df'] = test_df
