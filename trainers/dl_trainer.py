@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
@@ -23,6 +24,7 @@ class DeepLearningTrainer(BaseTrainer):
         pred_list = []
         label_list = []
         loss_list = []
+        user_list = []
         for data in (pbar := tqdm(train_loader)):
             for key, value in data.items():
                 data[key] = value.to(device)
@@ -33,13 +35,24 @@ class DeepLearningTrainer(BaseTrainer):
             optimizer.zero_grad()
             loss_list.append(loss.item())
             pred_list.append(output_dict["y_pred"].detach().cpu().numpy())
+            user_data = data.get(self.config["col_name"].get("user_col"), None)
+            if user_data is not None:
+                user_list.append(user_data.detach().cpu().numpy())
             label_list.append(data["label"].detach().cpu().numpy())
             pbar.set_description(f"loss: {np.mean(loss_list):.4f}")
-
+        if user_list:
+            train_df = pd.DataFrame({
+                self.config["col_name"].get("user_col"): np.concatenate(user_list).squeeze(),
+                self.config["col_name"].get("pre_col"): np.concatenate(pred_list).squeeze(),
+                self.config["col_name"].get("label_col"): np.concatenate(label_list).squeeze(),
+            })
+        else:
+            train_df = None
         res_dict = self.evaluation_manager.get_eval_res(
-            label_list,
-            pred_list,
             mode="train",
+            y_true=label_list,
+            y_pred=pred_list,
+            test_df=train_df,
         )
 
         return res_dict
@@ -54,6 +67,7 @@ class DeepLearningTrainer(BaseTrainer):
         pred_list = []
         label_list = []
         loss_list = []
+        user_list = []
         with torch.no_grad():
             for data in (pbar := tqdm(valid_loader)):
                 for key, value in data.items():
@@ -61,13 +75,25 @@ class DeepLearningTrainer(BaseTrainer):
                 output_dict = model(data)
                 loss = output_dict["loss"]
                 loss_list.append(loss.item())
+                user_data = data.get(self.config["col_name"].get("user_col"), None)
+                if user_data is not None:
+                    user_list.append(user_data.detach().cpu().numpy())
                 pred_list.append(output_dict["y_pred"].detach().cpu().numpy())
                 label_list.append(data["label"].detach().cpu().numpy())
                 pbar.set_description(f"loss: {np.mean(loss_list):.4f}")
+        if user_list:
+            valid_df = pd.DataFrame({
+                self.config["col_name"].get("user_col"): np.concatenate(user_list).squeeze(),
+                self.config["col_name"].get("pre_col"): np.concatenate(pred_list).squeeze(),
+                self.config["col_name"].get("label_col"): np.concatenate(label_list).squeeze(),
+            })
+        else:
+            valid_df = None
         res_dict = self.evaluation_manager.get_eval_res(
-            label_list,
-            pred_list,
-            mode="train",
+            mode="valid",
+            y_true=label_list,
+            y_pred=pred_list,
+            test_df=valid_df,
         )
         return res_dict
 
@@ -81,6 +107,7 @@ class DeepLearningTrainer(BaseTrainer):
         pred_list = []
         label_list = []
         loss_list = []
+        user_list = []
         with torch.no_grad():
             for data in (pbar := tqdm(test_loader)):
                 for key, value in data.items():
@@ -89,12 +116,24 @@ class DeepLearningTrainer(BaseTrainer):
                 loss = output_dict["loss"]
                 loss_list.append(loss.item())
                 pred_list.append(output_dict["y_pred"].detach().cpu().numpy())
+                user_data = data.get(self.config["col_name"].get("user_col"), None)
+                if user_data is not None:
+                    user_list.append(user_data.detach().cpu().numpy())
                 label_list.append(data["label"].detach().cpu().numpy())
                 pbar.set_description(f"loss: {np.mean(loss_list):.4f}")
+        if user_list:
+            test_df = pd.DataFrame({
+                self.config["col_name"].get("user_col"): np.concatenate(user_list).squeeze(),
+                self.config["col_name"].get("pre_col"): np.concatenate(pred_list).squeeze(),
+                self.config["col_name"].get("label_col"): np.concatenate(label_list).squeeze(),
+            })
+        else:
+            test_df = None
         res_dict = self.evaluation_manager.get_eval_res(
-            label_list,
-            pred_list,
-            mode="train",
+            mode="eval",
+            y_true=label_list,
+            y_pred=pred_list,
+            test_df=test_df,
         )
         return res_dict
 

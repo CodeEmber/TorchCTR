@@ -1,7 +1,7 @@
 '''
 Author       : wyx-hhhh
 Date         : 2024-03-25
-LastEditTime : 2024-04-25
+LastEditTime : 2024-06-12
 Description  : 
 '''
 DATA_CONFIG = {
@@ -11,6 +11,11 @@ DATA_CONFIG = {
         "dense_cols": [f'I{x}' for x in range(1, 14)],
         "train_ratio": 0.7,
         "valid_ratio": 0.2,
+        "col_name": {
+            "user_col": "user_id",
+            "label_col": "label",
+            "pre_col": "prediction",
+        },
     },
     "movielens": {
         "behaviour_path": ['data', 'movielens', 'ml-1m.inter'],
@@ -19,6 +24,11 @@ DATA_CONFIG = {
         "sparse_cols": ['user_id', 'item_id'],
         "dense_cols": [],
         "neg_sample_ratio": 3,
+        "col_name": {
+            "user_col": "user_id",
+            "label_col": "label",
+            "pre_col": "prediction",
+        },
     },
     "amazon": {
         "behaviour_path": ['data', 'amazon', 'Amazon_Electronics.inter'],
@@ -28,6 +38,11 @@ DATA_CONFIG = {
         "neg_sample_ratio": 2,
         "train_ratio": 0.8,
         "valid_ratio": 0.1,
+        "col_name": {
+            "user_col": "user_id",
+            "label_col": "label",
+            "pre_col": "prediction",
+        },
     },
     "gowalla": {
         "origin_path": ['data', 'gowalla', 'loc-gowalla_totalCheckins.txt'],
@@ -38,6 +53,11 @@ DATA_CONFIG = {
         "train_ratio": 0.8,
         "user_num": 66447,
         "item_num": 1242326,
+        "col_name": {
+            "user_col": "user_id",
+            "label_col": "label",
+            "pre_col": "prediction",
+        },
     },
     "pixelrec": {
         "behaviour_path": ['data', 'pixelrec', 'Pixel200K_inter.csv'],
@@ -47,5 +67,10 @@ DATA_CONFIG = {
         "neg_sample_ratio": 2,
         "train_ratio": 0.8,
         "valid_ratio": 0.1,
+        "col_name": {
+            "user_col": "user_id",
+            "label_col": "label",
+            "pre_col": "prediction",
+        },
     },
 }

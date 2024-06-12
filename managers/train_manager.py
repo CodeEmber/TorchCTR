@@ -1,7 +1,7 @@
 '''
 Author       : wyx-hhhh
 Date         : 2024-03-22
-LastEditTime : 2024-05-23
+LastEditTime : 2024-06-05
 Description  : 
 '''
 from trainers.base_train import BaseTrainer
@@ -11,7 +11,7 @@ from trainers.gnn_trainer import GraphNeuralNetworkTrainer
 
 class TrainManager():
 
-    def __init__(self, config, evaluation_manager):
+    def __init__(self, config, evaluation_manager=None):
         self.config = config
         self.evaluation_manager = evaluation_manager
         self.trainer = self._get_trainer()

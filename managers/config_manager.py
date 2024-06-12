@@ -1,7 +1,7 @@
 '''
 Author       : wyx-hhhh
 Date         : 2024-03-24
-LastEditTime : 2024-06-03
+LastEditTime : 2024-06-12
 Description  : 
 '''
 from config.data_config import DATA_CONFIG
@@ -30,6 +30,14 @@ class ConfigManager():
                         "eval_func": "log_loss"
                     },
                 ],
+                "valid": [
+                    {
+                        "eval_func": "auc"
+                    },
+                    {
+                        "eval_func": "log_loss"
+                    },
+                ],
                 "eval": [
                     {
                         "eval_func": "ndcg",
@@ -51,6 +59,9 @@ class ConfigManager():
 
     def _get_global_config(self):
         self.global_config = GOLBAL_CONFIG
+        # debug模式下不发送slack消息
+        if self.train_config.get('debug_mode'):
+            self.global_config['is_slack_enabled'] = False
 
     def _check_params(self):
         missing_params = [param for param in self.required_params if param not in self.train_config.keys()]

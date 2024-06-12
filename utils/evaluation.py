@@ -1,8 +1,8 @@
 '''
 Author       : wyx-hhhh
 Date         : 2023-10-28
-LastEditTime : 2024-04-12
-Description  : 
+LastEditTime : 2024-06-12
+Description  : 该文件已经废弃，评估指标已经集成到evaluate_manager.py中
 '''
 import math
 import numpy as np
