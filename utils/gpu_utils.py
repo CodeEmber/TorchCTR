@@ -68,6 +68,7 @@ class GPUMonitor():
             need_free_mem = self.config.get("need_free_mem", 1000)
             if self.gpu_info["device"][0]["free_mem"] > need_free_mem:
                 self.config["device"] = self.gpu_info["device"][0]["idx"]
+
                 self.logger.info(f"选择GPU: {self.gpu_info['device'][0]['idx']}, 可用内存: {self.gpu_info['device'][0]['free_mem']}MB")
                 self.logger.send_message(f"选择GPU: {self.gpu_info['device'][0]['idx']}, 可用内存: {self.gpu_info['device'][0]['free_mem']}MB", message_type=2, message_content_type=1)
                 break
