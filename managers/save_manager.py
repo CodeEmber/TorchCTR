@@ -2,8 +2,10 @@ import json
 import os
 import shutil
 from typing import List
+
+import pandas as pd
 import torch
-from utils.file_utils import check_folder, get_file_path
+from utils.file_utils import check_file, check_folder, get_file_path
 from torch.utils.tensorboard.writer import SummaryWriter
 
 from utils.utilities import set_timestamp
@@ -62,6 +64,18 @@ class SaveManager():
         if valid_metric:
             for metric_name, metric_value in valid_metric.items():
                 writer.add_scalar(f"{self.data_name}_valid/" + metric_name, metric_value, epoch)
+
+    def save_csv(self, data: dict, file_path: str):
+        check_file(file_path)
+        data = pd.DataFrame(data)
+        data.to_csv(file_path, index=False)
+        self.logger.info(f"保存{file_path}成功")
+
+    def save_json(self, data: dict, file_path: str):
+        check_file(file_path)
+        with open(file_path, 'w') as f:
+            json.dump(data, f)
+        self.logger.info(f"保存{file_path}成功")
 
     def save_all(
         self,
