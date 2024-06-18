@@ -1,7 +1,7 @@
 '''
 Author       : wyx-hhhh
 Date         : 2023-10-28
-LastEditTime : 2024-03-25
+LastEditTime : 2024-06-17
 Description  : 
 '''
 import os
@@ -58,3 +58,14 @@ def check_folder(folder_path: str):
     """
     if not os.path.exists(folder_path):
         os.makedirs(folder_path)
+
+
+def check_file(file_path: str):
+    """检查文件是否存在，如果不存在则创建
+
+    Args:
+        file_path (str): 文件路径
+    """
+    if not os.path.exists(file_path):
+        with open(file_path, 'w') as f:
+            pass
