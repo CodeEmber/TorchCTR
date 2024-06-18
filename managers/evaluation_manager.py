@@ -46,7 +46,8 @@ class EvaluationManager():
         """
         precisions = []
         for _, user_group in test_df.groupby(col_name['user_col']):
-            user_group['ranking'] = user_group[col_name['pre_col']].rank(ascending=False, method='first')
+            if 'ranking' not in test_df.columns:
+                test_df['ranking'] = test_df.groupby(col_name['user_col'])[col_name['pre_col']].rank(ascending=False, method='first')
             user_relevant_items = user_group[user_group['ranking'] <= k]
             precision = user_relevant_items[col_name['label_col']].sum() / k
             precisions.append(precision)
@@ -63,7 +64,8 @@ class EvaluationManager():
         Returns:
             hitrate (int): 命中用户数量比例
         """
-        test_df['ranking'] = test_df.groupby(col_name['user_col'])[col_name['pre_col']].rank(ascending=False, method='first')
+        if 'ranking' not in test_df.columns:
+            test_df['ranking'] = test_df.groupby(col_name['user_col'])[col_name['pre_col']].rank(ascending=False, method='first')
         test_gd_df = test_df[test_df['ranking'] <= k]
         test_gd_df = test_gd_df[test_gd_df[col_name['label_col']] == 1].reset_index(drop=True)
         return test_gd_df[col_name['user_col']].nunique() / test_df[col_name['user_col']].nunique()
@@ -79,7 +81,8 @@ class EvaluationManager():
         Returns:
             mrr (int): 平均倒数排名
         """
-        test_df['ranking'] = test_df.groupby(col_name['user_col'])[col_name['pre_col']].rank(ascending=False, method='first')
+        if 'ranking' not in test_df.columns:
+            test_df['ranking'] = test_df.groupby(col_name['user_col'])[col_name['pre_col']].rank(ascending=False, method='first')
         test_gd_df = test_df[(test_df['ranking'] <= k) & (test_df[col_name['label_col']] == 1)].reset_index(drop=True)
         test_gd_df = test_gd_df.sort_values(by=[col_name['user_col'], 'ranking'], ascending=[True, True])
         test_gd_df = test_gd_df.drop_duplicates(subset=[col_name['user_col']], keep='first').reset_index(drop=True)
@@ -97,7 +100,8 @@ class EvaluationManager():
         Returns:
             ndcg (int): 平均ndcg
         """
-        test_df['ranking'] = test_df.groupby(col_name['user_col'])[col_name['pre_col']].rank(ascending=False, method='first')
+        if 'ranking' not in test_df.columns:
+            test_df['ranking'] = test_df.groupby(col_name['user_col'])[col_name['pre_col']].rank(ascending=False, method='first')
         test_gd_df = test_df[(test_df['ranking'] <= k) & (test_df[col_name['label_col']] == 1)].reset_index(drop=True)
         ndcg_values = []  # 保存每个用户的dcg和idcg
         for user_id, user_group in test_gd_df.groupby(col_name['user_col']):
@@ -106,25 +110,32 @@ class EvaluationManager():
             idcg = sum(labels_sorted / np.log2(range(2, len(labels_sorted) + 2)))
             ndcg_values.append((user_id, dcg, idcg))
         ndcg_values = np.array(ndcg_values)
+        if len(ndcg_values) == 0:
+            return 0
         ndcg_values = ndcg_values[ndcg_values[:, 2] != 0]  # 防止出现0除
         return np.mean(ndcg_values[:, 1] / ndcg_values[:, 2])
 
     def recall(self, test_df: pd.DataFrame, col_name: dict, k: int = 20):
         """Recall@k
-
+    
         Args:
             test_df (pd.DataFrame): 测试集
             col_name (dict): 列名，包含user_col, pre_col, label_col
             k (int, optional): 排序数量. Defaults to 20.
-
+    
         Returns:
             recall (int): 平均召回率
         """
         recalls = []
         for _, user_group in test_df.groupby(col_name['user_col']):
-            user_group['ranking'] = user_group[col_name['pre_col']].rank(ascending=False, method='first')
+            if 'ranking' not in test_df.columns:
+                test_df['ranking'] = test_df.groupby(col_name['user_col'])[col_name['pre_col']].rank(ascending=False, method='first')
             user_relevant_items = user_group[user_group['ranking'] <= k]
-            recall = user_relevant_items[col_name['label_col']].sum() / user_group[col_name['label_col']].sum()
+            denominator = user_group[col_name['label_col']].sum()
+            if denominator != 0:
+                recall = user_relevant_items[col_name['label_col']].sum() / denominator
+            else:
+                recall = 0
             recalls.append(recall)
         return sum(recalls) / len(recalls)
 
@@ -142,7 +153,8 @@ class EvaluationManager():
         """
         fscores = []
         for _, user_group in test_df.groupby(col_name['user_col']):
-            user_group['ranking'] = user_group[col_name['pre_col']].rank(ascending=False, method='first')
+            if 'ranking' not in test_df.columns:
+                test_df['ranking'] = test_df.groupby(col_name['user_col'])[col_name['pre_col']].rank(ascending=False, method='first')
             user_relevant_items = user_group[user_group['ranking'] <= k]
             precision = user_relevant_items[col_name['label_col']].sum() / k
             recall = user_relevant_items[col_name['label_col']].sum() / user_group[col_name['label_col']].sum()
