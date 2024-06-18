@@ -36,6 +36,11 @@ class PixelRecProcessData(BaseProcessData):
         if self.config.get("debug", False):
             pos_df = pos_df.sample(frac=0.01).reset_index(drop=True)
             logger.info("调试模式，数据集缩小为原来的0.01")
+        self.map_dict = {
+            'user_map_dict': user_map_dict,
+            'item_id_map_dict': item_id_map_dict,
+            'item_tag_map_dict': item_tag_map_dict,
+        }
         return pos_df, pos_dict
 
     def get_enc_dict(self, pos_df) -> dict:
@@ -55,6 +60,8 @@ class PixelRecProcessData(BaseProcessData):
             'item_target_id': pos_df['item_id'].value_counts().to_dict(),
             'item_target_tag': pos_df['item_tag'].value_counts().to_dict(),
         }
+        self.enc_dict["map_dict"] = self.map_dict
+        logger.info("enc_dict构建完成")
 
     def construct_data(self, pos_df, pos_dict, max_seq=20, neg_sample_ratio=2):
         label_list = []
