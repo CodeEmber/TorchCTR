@@ -1,7 +1,7 @@
 '''
 Author       : wyx-hhhh
 Date         : 2024-03-04
-LastEditTime : 2024-04-11
+LastEditTime : 2024-06-26
 Description  : 
 '''
 import torch
@@ -34,14 +34,9 @@ class NGCFLayer(nn.Module):
         elif isinstance(module, nn.Embedding):
             nn.init.xavier_uniform_(module.weight.data)
 
-    def message_func(self, edges):
-        edge_feature = self.W1(edges.src['h']) + self.W2(edges.src['h'] * edges.dst['h'])
-        edge_feature = edge_feature * (edges.src['norm'] * edges.dst['norm'])
-        return {'e': edge_feature}
-
     def forward(self, g, user_embedding, item_embedding):
         g.ndata['h'] = torch.cat([user_embedding, item_embedding], dim=0)  # [user_num + item_num, embedding_dim]
-        g.update_all(self.message_func, fn.sum(msg='e', out='m'))
+        g.update_all(fn.u_mul_e('h', 'm'), fn.sum('m', 'h'))
         g.ndata['m'] = g.ndata['m'] + self.W1(g.ndata['h'])
         h = self.leaky_relu(g.ndata['m'])
         h = self.dropout(h)
