@@ -1,7 +1,7 @@
 '''
 Author       : wyx-hhhh
 Date         : 2024-04-08
-LastEditTime : 2024-04-11
+LastEditTime : 2024-06-26
 Description  : 
 '''
 import random
@@ -34,13 +34,20 @@ class GowallaDataset(Dataset):
         self.grouped_data = self.df.groupby('user_id')['item_id'].apply(list).to_dict()
 
     def generate_graph(self):
-        src_node_list = torch.cat([self.data['user_id'], self.data['item_id'] + self.user_num, torch.arange(self.user_num + self.item_num)], axis=0)
-        dst_node_list = torch.cat([self.data['item_id'] + self.user_num, self.data['user_id'], torch.arange(self.user_num + self.item_num)], axis=0)
+        if self.config.get("add_self_loop", True):
+            src_node_list = torch.cat([self.data['user_id'], self.data['item_id'] + self.user_num, torch.arange(self.user_num + self.item_num)], axis=0)
+            dst_node_list = torch.cat([self.data['item_id'] + self.user_num, self.data['user_id'], torch.arange(self.user_num + self.item_num)], axis=0)
+        else:
+            src_node_list = torch.cat([self.data['user_id'], self.data['item_id'] + self.user_num], axis=0)
+            dst_node_list = torch.cat([self.data['item_id'] + self.user_num, self.data['user_id']], axis=0)
         g = graph((src_node_list, dst_node_list))
 
         src_degree = g.out_degrees().float()
         norm = torch.pow(src_degree, -0.5).unsqueeze(1)  #compute norm
         g.ndata['norm'] = norm  #节点粒度的norm
+
+        edge_weight = norm[src_node_list] * norm[dst_node_list]  #计算边的权重
+        g.edata['edge_weight'] = edge_weight  # 边的权重
         return g
 
     def __getitem__(self, index) -> dict:
