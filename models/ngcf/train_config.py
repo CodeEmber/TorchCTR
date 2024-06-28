@@ -29,11 +29,11 @@ train_config = {
         "eval": [
             {
                 "eval_func": "ndcg",
-                "k": [10, 20]
+                "k": [10, 20, 30]
             },
             {
                 "eval_func": "recall",
-                "k": [10, 20]
+                "k": [10, 20, 30]
             },
         ],
     },

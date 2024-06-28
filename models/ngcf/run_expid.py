@@ -1,7 +1,7 @@
 '''
 Author       : wyx-hhhh
 Date         : 2023-10-28
-LastEditTime : 2024-06-12
+LastEditTime : 2024-06-28
 Description  : 
 '''
 import torch
@@ -11,6 +11,7 @@ from models.ngcf.train_config import train_config
 from managers import ConfigManager, DataManager, LoggerManager, TrainManager, SaveManager, EvaluationManager
 from utils.torch_utils import set_device
 from utils.utilities import get_values_by_keys
+from trainers.gnn_trainer import GraphNeuralNetworkTrainer
 
 config_manager = ConfigManager(train_config=train_config)
 config = config_manager.get_config()
@@ -28,7 +29,7 @@ train_dataloader, test_dataloader, graph_data, train_grouped_data, test_grouped_
     ],
 )
 evaluation_manager = EvaluationManager(config=config, logger=logger)
-train_manager = TrainManager(config=config, evaluation_manager=evaluation_manager).trainer
+train_manager: GraphNeuralNetworkTrainer = TrainManager(config=config, evaluation_manager=evaluation_manager).trainer
 save_manager = SaveManager(config=config, logger=logger)
 
 device = set_device(config['device'])
@@ -47,14 +48,12 @@ for i in range(config['epoch']):
     logger.info(f"Epoch: {i + 1}")
     logger.info(f"Train Metric: {train_metric}")
     #模型验证
-    if i % 1 == 0 or i == config['epoch'] - 1:
+    if i % 10 == 0 or i == config['epoch'] - 1:
         test_metric = train_manager.test_model(
             model,
             train_grouped_data,
             test_grouped_data,
-            device,
-            config['embedding_dim'] * (len(config['hidden_size'])),
-            20,
+            config['embedding_dim'] * (len(config['hidden_units'])),
         )
         logger.info(f"Epoch {i} Test Metric: {test_metric}")
         logger.send_message(
