@@ -1,7 +1,7 @@
 '''
 Author       : wyx-hhhh
 Date         : 2024-05-22
-LastEditTime : 2024-06-12
+LastEditTime : 2024-06-28
 Description  : 
 '''
 
@@ -89,13 +89,14 @@ class EvaluationManager():
         test_gd_df['mrr'] = 1 / test_gd_df['ranking']
         return test_gd_df['mrr'].sum() / test_df[col_name['user_col']].nunique()
 
-    def ndcg(self, test_df: pd.DataFrame, col_name: dict, k: int = 20):
+    def ndcg(self, test_df: pd.DataFrame, col_name: dict, k: int = 20, version: int = 0):
         """Normalized Discounted Cumulative Gain
         
         Args:
             test_df (pd.DataFrame): 测试集
             col_name (dict): 列名，包含user_col, pre_col, label_col
             k (int, optional): 排序数量. Defaults to 20.
+            version (int, optional): dcg版本. Defaults to 0:rel_i/log2(i+1);1:(2^rel_i-1)/log2(i+1)
             
         Returns:
             ndcg (int): 平均ndcg
@@ -105,9 +106,15 @@ class EvaluationManager():
         test_gd_df = test_df[(test_df['ranking'] <= k) & (test_df[col_name['label_col']] == 1)].reset_index(drop=True)
         ndcg_values = []  # 保存每个用户的dcg和idcg
         for user_id, user_group in test_gd_df.groupby(col_name['user_col']):
-            dcg = sum(user_group[col_name['label_col']] / np.log2(user_group['ranking'] + 1))
+            if version == 0:
+                dcg = sum(user_group[col_name['label_col']] / np.log2(user_group['ranking'] + 1))
+            else:
+                dcg = sum((2**user_group[col_name['label_col']] - 1) / np.log2(user_group['ranking'] + 1))
             labels_sorted = user_group[col_name['label_col']].sort_values(ascending=False)
-            idcg = sum(labels_sorted / np.log2(range(2, len(labels_sorted) + 2)))
+            if version == 0:
+                idcg = sum(labels_sorted / np.log2(range(2, len(labels_sorted) + 2)))
+            else:
+                idcg = sum((2**labels_sorted - 1) / np.log2(range(2, len(labels_sorted) + 2)))
             ndcg_values.append((user_id, dcg, idcg))
         ndcg_values = np.array(ndcg_values)
         if len(ndcg_values) == 0:
@@ -250,7 +257,12 @@ class EvaluationManager():
                                 res_dict[f"mrr@{k}"] = self.mrr(test_df=test_df, col_name=self.col_name, k=k)
                         elif metric["eval_func"] == "ndcg":
                             for k in metric.get("k", [20]):
-                                res_dict[f"ndcg@{k}"] = self.ndcg(test_df=test_df, col_name=self.col_name, k=k)
+                                res_dict[f"ndcg@{k}"] = self.ndcg(
+                                    test_df=test_df,
+                                    col_name=self.col_name,
+                                    k=k,
+                                    version=metric.get("version", 0),
+                                )
                         elif metric["eval_func"] == "gauc":
                             res_dict["gauc"] = self.gauc(test_df=test_df, col_name=self.col_name)
                         elif metric["eval_func"] == "auc":
@@ -278,3 +290,34 @@ class EvaluationManager():
                     return res_dict
         except:
             raise ValueError("metric_func error")
+
+
+if __name__ == "__main__":
+    # 生成一个虚假的test_df，其中包含user_id, item_id, label，pre_col五列
+    import pandas as pd
+    import numpy as np
+
+    test_df = pd.DataFrame()
+    # user_id定义3个用户，每个用户对应十个item_id
+    test_df['user_id'] = [1] * 10 + [2] * 10 + [3] * 10
+    test_df['item_id'] = np.random.randint(1, 100, 30)
+    #  pre_col随机生成
+    test_df['pre_col'] = np.random.rand(30)
+    # 为每个用户的每个item_id生成一个ranking
+    test_df['ranking'] = test_df.groupby('user_id')['pre_col'].rank(ascending=False, method='first')
+    # 按照user_id和ranking排序
+    test_df = test_df.sort_values(by=['user_id', 'ranking'])
+    # 生成label列
+    test_df['label'] = [1, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 0]
+    # 去除ranking列
+    test_df = test_df.drop(columns=['ranking'])
+    # 默认的col_name
+    col_name = {
+        'user_col': 'user_id',
+        'item_col': 'item_id',
+        'label_col': 'label',
+        'pre_col': 'pre_col',
+    }
+
+    E = EvaluationManager()
+    print(E.ndcg(test_df, col_name, k=6, version=1))
