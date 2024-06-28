@@ -1,7 +1,7 @@
 '''
 Author       : wyx-hhhh
 Date         : 2024-03-04
-LastEditTime : 2024-06-26
+LastEditTime : 2024-06-28
 Description  : 
 '''
 import torch
@@ -34,9 +34,14 @@ class NGCFLayer(nn.Module):
         elif isinstance(module, nn.Embedding):
             nn.init.xavier_uniform_(module.weight.data)
 
+    def message_func(self, edges):
+        edge_feature = self.W1(edges.src['h']) + self.W2(edges.src['h'] * edges.dst['h'])
+        edge_feature = edge_feature * (edges.src['norm'] * edges.dst['norm'])
+        return {'e': edge_feature}
+
     def forward(self, g, user_embedding, item_embedding):
         g.ndata['h'] = torch.cat([user_embedding, item_embedding], dim=0)  # [user_num + item_num, embedding_dim]
-        g.update_all(fn.u_mul_e('h', 'm'), fn.sum('m', 'h'))
+        g.update_all(self.message_func, fn.sum(msg='e', out='m'))
         g.ndata['m'] = g.ndata['m'] + self.W1(g.ndata['h'])
         h = self.leaky_relu(g.ndata['m'])
         h = self.dropout(h)
@@ -81,20 +86,46 @@ class NGCF(nn.Module):
             if module.bias is not None:
                 nn.init.constant_(module.bias.data, 0)
 
-    def node_dropout_fn(self, g, node_dropout):
-        row, col = g.edges()
-        mask = torch.rand(row.size(0), device=row.device) >= node_dropout
-        filter_row, filter_col = row[mask], col[mask]
-        g1 = graph((filter_row, filter_col), num_nodes=g.num_nodes())
-        g1 = dgl.add_self_loop(g1)
+    def node_dropout_fn(
+        self,
+        g: dgl.DGLGraph,
+        node_dropout: float,
+    ):
+        """
+        Implement node dropout and compute node norms and edge weights.
+        
+        Args:
+            g (DGLGraph): The input graph.
+            node_dropout (float): The node dropout rate.
+        
+        Returns:
+            DGLGraph: The modified graph with node dropout and updated edge weights.
+        """
+        # Concatenate source and destination nodes
+        src_node_list = torch.cat([g.srcnodes(), g.dstnodes()], dim=0)
+        dst_node_list = torch.cat([g.dstnodes(), g.srcnodes()], dim=0)
 
-        src_degree = g1.out_degrees().float()
+        # Compute node degrees
+        src_degree = g.out_degrees().float()
+
+        # Compute node norms
         norm = torch.pow(src_degree, -0.5).unsqueeze(1)
-        g1.ndata['norm'] = norm
 
-        g1 = g1.to(row.device)
+        # Compute edge weights
+        edge_weight = norm[src_node_list] * norm[dst_node_list]
+        edge_weight = edge_weight.squeeze()
 
-        return g1
+        # Apply node dropout
+        keep_mask = torch.rand(len(src_node_list)) >= node_dropout
+        src_node_list = src_node_list[keep_mask]
+        dst_node_list = dst_node_list[keep_mask]
+        edge_weight = edge_weight[keep_mask]
+
+        # Create the modified graph
+        g = dgl.graph((src_node_list, dst_node_list), num_nodes=g.num_nodes())
+        g.edata['edge_weight'] = edge_weight
+
+        return g
 
     def custom_loss(self, user_embedding, pos_item_embedding, neg_item_embedding):
         pos_scores = (user_embedding * pos_item_embedding).sum(dim=1)
