@@ -1,7 +1,7 @@
 '''
 Author       : wyx-hhhh
 Date         : 2024-04-08
-LastEditTime : 2024-06-26
+LastEditTime : 2024-06-28
 Description  : 
 '''
 import random
@@ -38,6 +38,7 @@ class GowallaDataset(Dataset):
             src_node_list = torch.cat([self.data['user_id'], self.data['item_id'] + self.user_num, torch.arange(self.user_num + self.item_num)], axis=0)
             dst_node_list = torch.cat([self.data['item_id'] + self.user_num, self.data['user_id'], torch.arange(self.user_num + self.item_num)], axis=0)
         else:
+            # 不添加自环可能会出现部分节点没有边的情况，然后在之后Embedding匹配过程中可能会出现问题
             src_node_list = torch.cat([self.data['user_id'], self.data['item_id'] + self.user_num], axis=0)
             dst_node_list = torch.cat([self.data['item_id'] + self.user_num, self.data['user_id']], axis=0)
         g = graph((src_node_list, dst_node_list))
