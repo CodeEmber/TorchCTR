@@ -1,7 +1,7 @@
 '''
 Author       : wyx-hhhh
 Date         : 2024-06-26
-LastEditTime : 2024-06-26
+LastEditTime : 2024-06-28
 Description  : 
 '''
 import torch
@@ -22,7 +22,7 @@ class LightGCNConv(nn.Module):
         item_embedding: torch.Tensor,
     ):
         g.ndata['h'] = torch.cat([user_embedding, item_embedding], dim=0)  # [user_num + item_num, embedding_dim]
-        g.update_all(fn.u_mul_e('h', 'm'), fn.sum('m', 'h'))
+        g.update_all(fn.u_mul_e('h', 'edge_weight', 'm'), fn.sum('m', 'h'))
         h = nn.functional.normalize(g.ndata['h'], p=2, dim=1)
         return h
 
@@ -41,7 +41,6 @@ class LightGCN(nn.Module):
         self.item_num = self.config['item_num']
         self.embedding_dim = self.config['embedding_dim']
         self.hidden_units = self.config['hidden_units']
-        self.message_dropout = self.config['message_dropout']
         self.lmbd = self.config['lmbd']
 
         self.user_embedding_layer = nn.Embedding(self.user_num, self.embedding_dim)
@@ -75,7 +74,7 @@ class LightGCN(nn.Module):
         final_user_embedding_list = [user_embedding]  # [user_embedding, layer1_user_embedding, layer2_user_embedding, ...]
         final_item_embedding_list = [item_embedding]  # [item_embedding, layer1_item_embedding, layer2_item_embedding, ...]
 
-        for gcn_layer in range(len(self.hidden_units)):
+        for _ in range(len(self.hidden_units)):
             hidden = self.gcn_layer(self.g, user_embedding, item_embedding)
             user_embedding, item_embedding = torch.split(hidden, [self.user_num, self.item_num], dim=0)
             final_user_embedding_list.append(user_embedding)
