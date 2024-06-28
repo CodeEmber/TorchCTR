@@ -19,3 +19,4 @@ nohup.out
 *.mdb
 *.jpg
 test.py
+.history
