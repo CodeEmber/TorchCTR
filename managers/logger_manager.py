@@ -2,7 +2,7 @@
 Description  : 日志文件配置
 Author       : wyx-hhhh
 Date         : 2022-01-24 17:26:50
-LastEditTime : 2024-06-05
+LastEditTime : 2024-06-28
 LastEditors  : Please set LastEditors
 '''
 import logging.config
@@ -83,7 +83,7 @@ class LoggerManager():
         Raises:
             ValueError: 只支持dict和str类型的消息内容, message_type只支持0, 1, 2
         """
-        if self.config.get("is_slack_enabled") and self.config.get("slack_url") and self.config.get("slack_user_id"):
+        if self.config.get("is_slack_enabled") and self.config.get("slack_url") and self.config.get("slack_user_id") and not self.config.get("debug_mode"):
             try:
                 headers = {"Content-type": "application/json"}
                 if message_type == 0:
