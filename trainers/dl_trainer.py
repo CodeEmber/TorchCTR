@@ -25,7 +25,7 @@ class DeepLearningTrainer(BaseTrainer):
         label_list = []
         loss_list = []
         user_list = []
-        for data in (pbar := tqdm(train_loader)):
+        for data in train_loader:
             for key, value in data.items():
                 data[key] = value.to(device)
             output_dict = model(data)
@@ -39,7 +39,6 @@ class DeepLearningTrainer(BaseTrainer):
             if user_data is not None:
                 user_list.append(user_data.detach().cpu().numpy())
             label_list.append(data["label"].detach().cpu().numpy())
-            pbar.set_description(f"loss: {np.mean(loss_list):.4f}")
         if user_list:
             train_df = pd.DataFrame({
                 self.config["col_name"].get("user_col"): np.concatenate(user_list).squeeze(),

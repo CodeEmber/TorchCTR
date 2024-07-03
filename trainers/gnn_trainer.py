@@ -1,7 +1,7 @@
 '''
 Author       : wyx-hhhh
 Date         : 2024-04-11
-LastEditTime : 2024-06-28
+LastEditTime : 2024-07-03
 Description  : 
 '''
 import pandas as pd
@@ -19,9 +19,8 @@ class GraphNeuralNetworkTrainer(BaseTrainer):
     def train_model(self, model, train_loader, optimizer, device):
         model.train()
 
-        pbar = tqdm(train_loader)
         epoch_loss = 0
-        for data in pbar:
+        for data in train_loader:
 
             for key in data.keys():
                 data[key] = data[key].to(device)
@@ -34,7 +33,6 @@ class GraphNeuralNetworkTrainer(BaseTrainer):
             model.zero_grad()
 
             epoch_loss += loss.item()
-            pbar.set_description("Loss {}".format(round(epoch_loss, 4)))
         res_dict = self.evaluation_manager.get_eval_res(
             loss=epoch_loss / len(train_loader),
             mode="train",
