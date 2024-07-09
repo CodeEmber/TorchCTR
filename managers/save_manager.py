@@ -18,6 +18,31 @@ class SaveManager():
         self.model_name = config['model_name']
         self.data_name = config['data']
         self.logger = logger
+        self.save_points = []
+        self._get_save_model_points()
+
+    def _get_save_model_points(self):
+        total_epochs = self.config['epoch']
+        split_ratio = [6, 3, 1]
+        split_points = [0]
+
+        # 计算分割点时避免分母为0
+        for ratio in split_ratio:
+            denominator = sum(split_ratio)
+            if denominator == 0:
+                split_points.append(total_epochs)
+            else:
+                split_points.append(split_points[-1] + total_epochs * ratio // denominator)
+
+        for i in range(0, total_epochs + 1):
+            if i < split_points[1]:
+                if total_epochs // 10 != 0 and i % (total_epochs // 10) == 0:
+                    self.save_points.append(i)
+            elif i < split_points[2]:
+                if total_epochs // 20 != 0 and i % (total_epochs // 20) == 0:
+                    self.save_points.append(i)
+            elif total_epochs // 40 != 0 and i % (total_epochs // 40) == 0:
+                self.save_points.append(i)
 
     def save_evaluation_results(self, metric: List[dict]):
         if isinstance(metric, List):
@@ -33,7 +58,7 @@ class SaveManager():
             self.logger.send_message(metric, message_type=0, message_content_type=0)
         else:
             raise TypeError("metric的格式为List[dict]")
-        file_path = get_file_path(['results', self.model_name, f'evaluation_{self.data_name}.json'])
+        file_path = get_file_path(['results', f"{self.model_name}_{self.data_name}", f'evaluation_{self.data_name}.json'])
         try:
             with open(file_path, 'r+') as f:
                 data = json.load(f)
@@ -45,15 +70,15 @@ class SaveManager():
                 json.dump([metric], f)
 
     def save_model(self, model, epoch):
-        if not os.path.exists((folder_path := get_file_path(['results', self.model_name, 'save_model']))):
+        if not os.path.exists((folder_path := get_file_path(['results', f"{self.model_name}_{self.data_name}", 'save_model']))):
             os.makedirs(folder_path)
-        if epoch % 2 == 0 or epoch == self.config['epoch'] - 1:
-            file_path = get_file_path(['results', self.model_name, 'save_model', f'{self.model_name}_{self.data_name}_{epoch}_{set_timestamp()}.pth'])
+        if epoch == self.config['epoch'] - 1 or epoch in self.save_points:
+            file_path = get_file_path(['results', f"{self.model_name}_{self.data_name}", 'save_model', f'{self.model_name}_{self.data_name}_{epoch}_{set_timestamp()}.pth'])
             torch.save(model.state_dict(), file_path)
 
     def save_tensorboardx(self, epoch: int, train_metric: dict, valid_metric: dict):
 
-        log_path = get_file_path(['results', self.model_name, 'save_tensorboard'])
+        log_path = get_file_path(['results', f"{self.model_name}_{self.data_name}", 'save_tensorboard'])
         if not os.path.exists(log_path):
             os.makedirs(log_path)
         writer = SummaryWriter(log_path)
@@ -106,11 +131,11 @@ class SaveManager():
             other_metric (dict): 其他评估结果
         """
         if is_clear and epoch == 0:
-            file_path = get_file_path(['results', self.model_name])
+            file_path = get_file_path(['results', f"{self.model_name}_{self.data_name}"])
             if os.path.exists(file_path):
                 shutil.rmtree(file_path)
-            self.logger.info(f"清空{self.model_name}的结果")
-        check_folder(get_file_path(['results', self.model_name]))
+            self.logger.info(f"清空{self.model_name}_{self.data_name}的结果")
+        check_folder(get_file_path(['results', f"{self.model_name}_{self.data_name}"]))
         if is_save_model:
             self.save_model(model=model, epoch=epoch)
         if is_save_tensorboard:
