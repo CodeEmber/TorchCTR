@@ -76,19 +76,35 @@ class SaveManager():
             file_path = get_file_path(['results', f"{self.model_name}_{self.data_name}", 'save_model', f'{self.model_name}_{self.data_name}_{epoch}_{set_timestamp()}.pth'])
             torch.save(model.state_dict(), file_path)
 
-    def save_tensorboardx(self, epoch: int, train_metric: dict, valid_metric: dict):
+    def save_tensorboardx(
+        self,
+        epoch: int,
+        train_metric: dict = None,
+        valid_metric: dict = None,
+        test_metric: dict = None,
+        other_metric: dict = None,
+    ):
 
         log_path = get_file_path(['results', f"{self.model_name}_{self.data_name}", 'save_tensorboard'])
         if not os.path.exists(log_path):
             os.makedirs(log_path)
         writer = SummaryWriter(log_path)
 
-        for metric_name, metric_value in train_metric.items():
-            writer.add_scalar(f"{self.data_name}_train/" + metric_name, metric_value, epoch)
+        if train_metric:
+            for metric_name, metric_value in train_metric.items():
+                writer.add_scalar(f"{self.data_name}_train/" + metric_name, metric_value, epoch)
 
         if valid_metric:
             for metric_name, metric_value in valid_metric.items():
                 writer.add_scalar(f"{self.data_name}_valid/" + metric_name, metric_value, epoch)
+
+        if test_metric:
+            for metric_name, metric_value in test_metric.items():
+                writer.add_scalar(f"{self.data_name}_test/" + metric_name, metric_value, epoch)
+
+        if other_metric:
+            for metric_name, metric_value in other_metric.items():
+                writer.add_scalar(f"{self.data_name}_other/" + metric_name, metric_value, epoch)
 
     def save_csv(self, data: dict, file_path: str):
         check_file(file_path)
@@ -139,11 +155,7 @@ class SaveManager():
         if is_save_model:
             self.save_model(model=model, epoch=epoch)
         if is_save_tensorboard:
-            self.save_tensorboardx(
-                epoch=epoch + 1,
-                train_metric=train_metric,
-                valid_metric=valid_metric,
-            )
+            self.save_tensorboardx(epoch=epoch + 1, train_metric=train_metric, valid_metric=valid_metric, test_metric=test_metric, other_metric=other_metric)
         if is_save_evaluation:
             self.save_evaluation_results(metric=[
                 {
