@@ -1,7 +1,13 @@
+'''
+Author       : wyx-hhhh
+Date         : 2024-07-09
+LastEditTime : 2024-07-09
+Description  : 
+'''
 import torch
 
-from models.lightgcn.model import LightGCN
-from models.lightgcn.train_config import train_config
+from models.sgl.model import SGL
+from models.sgl.train_config import train_config
 from managers import ConfigManager, DataManager, LoggerManager, TrainManager, SaveManager, EvaluationManager
 from utils.torch_utils import set_device
 from utils.utilities import get_values_by_keys
@@ -28,7 +34,7 @@ save_manager = SaveManager(config=config, logger=logger)
 
 device = set_device(config['device'])
 graph_data = graph_data.to(device)
-model = LightGCN(config=config, g=graph_data)
+model = SGL(config=config, g=graph_data)
 optimizer = torch.optim.Adam(model.parameters(), lr=config['lr'], betas=(0.9, 0.999), eps=1e-08, weight_decay=0)
 model = model.to(device)
 for i in range(config['epoch']):
@@ -49,6 +55,7 @@ for i in range(config['epoch']):
             test_grouped_data,
             config['embedding_dim'],
         )
+        save_manager.save_tensorboardx(epoch=i, test_metric=test_metric)
         logger.info(f"Epoch {i} Test Metric: {test_metric}")
         logger.send_message(
             message={

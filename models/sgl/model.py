@@ -46,8 +46,8 @@ class SGL(nn.Module):
         self.num_layers = len(self.hidden_units)
         self.lmbd = self.config['lmbd']
         self.aug_type = self.config['aug_type']
-        self.node_dropout = self.config['node_dropout']
-        self.edge_dropout = self.config['edge_dropout']
+        self.node_dropout_num = self.config['node_dropout_num']
+        self.edge_dropout_num = self.config['edge_dropout_num']
         self.ssl_tau = self.config['ssl_tau']
         self.ssl_weight = self.config['ssl_weight']
         self.generation_augmented_graph()
@@ -76,11 +76,11 @@ class SGL(nn.Module):
         g.edata['edge_weight'] = edge_weight
         return g
 
-    def node_dropout(self, g: dgl.DGLGraph, node_dropout: float):
+    def node_dropout(self, g: dgl.DGLGraph, node_dropout_num: float):
         num_nodes = g.num_nodes()
         nodes_list = g.nodes()
         row, col = g.edges()
-        mask = torch.rand(num_nodes, device=g.device) >= node_dropout
+        mask = torch.rand(num_nodes, device=g.device) >= node_dropout_num
 
         keep_nodes = nodes_list[mask]
         filter_row, filter_col = row[keep_nodes], col[keep_nodes]
@@ -90,9 +90,9 @@ class SGL(nn.Module):
 
         return self.calculate_graph(g1)
 
-    def edge_dropout(self, g: dgl.DGLGraph, edge_dropout: float):
+    def edge_dropout(self, g: dgl.DGLGraph, edge_dropout_num: float):
         row, col = g.edges()
-        mask = torch.rand(row.size(0), device=row.device) >= edge_dropout
+        mask = torch.rand(row.size(0), device=row.device) >= edge_dropout_num
         filter_row, filter_col = row[mask], col[mask]
         g1 = graph((filter_row, filter_col), num_nodes=g.num_nodes())
         g1 = dgl.add_self_loop(g1)
@@ -101,18 +101,20 @@ class SGL(nn.Module):
 
     def generation_augmented_graph(self):
         if self.aug_type == 'ED':
-            self.sub_graph1 = [self.edge_dropout(self.g, self.edge_dropout)] * self.num_layers
-            self.sub_graph2 = [self.edge_dropout(self.g, self.edge_dropout)] * self.num_layers
+            self.sub_graph1 = [self.edge_dropout(self.g, self.edge_dropout_num)] * self.num_layers
+            self.sub_graph2 = [self.edge_dropout(self.g, self.edge_dropout_num)] * self.num_layers
         elif self.aug_type == 'ND':
-            self.sub_graph1 = [self.node_dropout(self.g, self.node_dropout)] * self.num_layers
-            self.sub_graph2 = [self.node_dropout(self.g, self.node_dropout)] * self.num_layers
+            self.sub_graph1 = [self.node_dropout(self.g, self.node_dropout_num)] * self.num_layers
+            self.sub_graph2 = [self.node_dropout(self.g, self.node_dropout_num)] * self.num_layers
         elif self.aug_type == 'RW':
             self.sub_graph1 = [self.edge_dropout(self.g, self.edge_dropout) for _ in range(self.num_layers)]
             self.sub_graph2 = [self.edge_dropout(self.g, self.edge_dropout) for _ in range(self.num_layers)]
         else:
             raise ValueError('Augmentation type must be one of ED, ND, RW')
 
-    def get_augmented_embedding(self, user_embedding, item_embedding, sub_graph):
+    def get_augmented_embedding(self, sub_graph):
+        user_embedding = self.user_embedding_layer.weight  # [user_num, embedding_dim]
+        item_embedding = self.item_embedding_layer.weight  # [item_num, embedding_dim]
         final_user_embedding_list = [user_embedding]
         final_item_embedding_list = [item_embedding]
 
@@ -134,17 +136,9 @@ class SGL(nn.Module):
         regularizer = (torch.norm(user_embedding)**2 + torch.norm(pos_item_embedding)**2 + torch.norm(neg_item_embedding)**2) / 2
         return loss + self.lmbd * regularizer / user_embedding.shape[0]
 
-    def create_ssl_loss(self, user_embedding, item_embedding, data):
-        user_sub1, item_sub1 = self.get_augmented_embedding(
-            user_embedding,
-            item_embedding,
-            self.sub_graph1,
-        )
-        user_sub2, item_sub2 = self.get_augmented_embedding(
-            user_embedding,
-            item_embedding,
-            self.sub_graph2,
-        )
+    def create_ssl_loss(self, data):
+        user_sub1, item_sub1 = self.get_augmented_embedding(self.sub_graph1)
+        user_sub2, item_sub2 = self.get_augmented_embedding(self.sub_graph2)
 
         u_emd1 = F.normalize(user_sub1[data['user_id']], dim=1)
         u_emd2 = F.normalize(user_sub2[data['user_id']], dim=1)  # [batch,emb]
@@ -193,11 +187,7 @@ class SGL(nn.Module):
                 pos_item_embedding,
                 neg_item_embedding,
             )
-            ssl_loss = self.create_ssl_loss(
-                user_embedding,
-                pos_item_embedding,
-                data,
-            )
+            ssl_loss = self.create_ssl_loss(data, )
             loss = bpr_loss + ssl_loss
             output_dict['loss'] = loss
         else:
