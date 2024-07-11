@@ -1,7 +1,7 @@
 '''
 Author       : wyx-hhhh
 Date         : 2024-06-26
-LastEditTime : 2024-06-28
+LastEditTime : 2024-07-11
 Description  : 
 '''
 import torch
@@ -39,22 +39,19 @@ optimizer = torch.optim.Adam(model.parameters(), lr=config['lr'], betas=(0.9, 0.
 model = model.to(device)
 for i in range(config['epoch']):
     train_metric = train_manager.train_model(model, train_dataloader, optimizer=optimizer, device=device)
-    save_manager.save_all(
-        epoch=i,
-        train_metric=train_metric,
-        model=model,
-        is_clear=True,
-    )
+
     logger.info(f"Epoch: {i + 1}")
     logger.info(f"Train Metric: {train_metric}")
     #模型验证
-    if i % 10 == 0 or i == config['epoch'] - 1:
+    test_metric = None
+    if i % 5 == 0 or i == config['epoch'] - 1:
         test_metric = train_manager.test_model(
             model,
             train_grouped_data,
             test_grouped_data,
             config['embedding_dim'],
         )
+
         logger.info(f"Epoch {i} Test Metric: {test_metric}")
         logger.send_message(
             message={
@@ -64,3 +61,12 @@ for i in range(config['epoch']):
             message_type=2,
             message_content_type=0,
         )
+    save_manager.save_all(
+        epoch=i,
+        train_metric=train_metric,
+        valid_metric=None,
+        test_metric=test_metric,
+        other_metric=None,
+        model=model,
+        is_clear=True,
+    )

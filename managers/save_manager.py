@@ -155,7 +155,13 @@ class SaveManager():
         if is_save_model:
             self.save_model(model=model, epoch=epoch)
         if is_save_tensorboard:
-            self.save_tensorboardx(epoch=epoch + 1, train_metric=train_metric, valid_metric=valid_metric, test_metric=test_metric, other_metric=other_metric)
+            self.save_tensorboardx(
+                epoch=epoch + 1,
+                train_metric=train_metric,
+                valid_metric=valid_metric,
+                test_metric=test_metric,
+                other_metric=other_metric,
+            )
         if is_save_evaluation:
             self.save_evaluation_results(metric=[
                 {
