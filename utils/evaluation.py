@@ -1,7 +1,7 @@
 '''
 Author       : wyx-hhhh
 Date         : 2023-10-28
-LastEditTime : 2024-06-12
+LastEditTime : 2024-07-11
 Description  : 该文件已经废弃，评估指标已经集成到evaluate_manager.py中
 '''
 import math
@@ -49,7 +49,7 @@ def evaluate_recall(preds, test_gd, top_n=50):
         for no, item_id in enumerate(item_list):
             if item_id in preds[user][:top_n]:
                 recall += 1
-                dcg += 1.0 / math.log(no + 2, 2)
+                dcg += 1.0 / math.log(preds[user].index(item_id) + 2, 2)
             idcg = 0.0
             for no in range(recall):
                 idcg += 1.0 / math.log(no + 2, 2)
@@ -57,8 +57,10 @@ def evaluate_recall(preds, test_gd, top_n=50):
         if recall > 0:
             total_ndcg += dcg / idcg
             total_hitrate += 1
+    print(dcg, idcg)
     total = len(test_gd)
     recall = total_recall / total
     ndcg = total_ndcg / total
     hitrate = total_hitrate * 1.0 / total
+    print(total)
     return {f'recall@{top_n}': round(recall, 4), f'ndcg@{top_n}': round(ndcg, 4), f'hitrate@{top_n}': round(hitrate, 4)}

@@ -1,7 +1,7 @@
 '''
 Author       : wyx-hhhh
 Date         : 2024-05-22
-LastEditTime : 2024-06-28
+LastEditTime : 2024-07-11
 Description  : 
 '''
 
@@ -10,6 +10,7 @@ import pandas as pd
 from sklearn.metrics import log_loss, roc_auc_score
 
 from managers.logger_manager import LoggerManager
+from utils.middleware import time_middleware
 
 
 class EvaluationManager():
@@ -33,7 +34,7 @@ class EvaluationManager():
     def rmse(self, y_true, y_pred):
         return np.sqrt(np.mean((np.concatenate(y_true) - np.concatenate(y_pred))**2))
 
-    def precision(self, test_df: pd.DataFrame, col_name: dict, k: int = 20):
+    def precision_dataframe(self, test_df: pd.DataFrame, col_name: dict, k: int = 20):
         """Precision@k
 
         Args:
@@ -53,7 +54,7 @@ class EvaluationManager():
             precisions.append(precision)
         return sum(precisions) / len(precisions)
 
-    def hitrate(self, test_df: pd.DataFrame, col_name: dict, k: int = 20):
+    def hitrate_dataframe(self, test_df: pd.DataFrame, col_name: dict, k: int = 20):
         """基于命中用户的评估指标
         
         Args:
@@ -70,7 +71,7 @@ class EvaluationManager():
         test_gd_df = test_gd_df[test_gd_df[col_name['label_col']] == 1].reset_index(drop=True)
         return test_gd_df[col_name['user_col']].nunique() / test_df[col_name['user_col']].nunique()
 
-    def mrr(self, test_df: pd.DataFrame, col_name: dict, k: int = 20):
+    def mrr_dataframe(self, test_df: pd.DataFrame, col_name: dict, k: int = 20):
         """Mean Reciprocal Rank
         
         Args:
@@ -89,7 +90,7 @@ class EvaluationManager():
         test_gd_df['mrr'] = 1 / test_gd_df['ranking']
         return test_gd_df['mrr'].sum() / test_df[col_name['user_col']].nunique()
 
-    def ndcg(self, test_df: pd.DataFrame, col_name: dict, k: int = 20, version: int = 0):
+    def ndcg_dataframe(self, test_df: pd.DataFrame, col_name: dict, k: int = 20, version: int = 0):
         """Normalized Discounted Cumulative Gain
         
         Args:
@@ -103,26 +104,28 @@ class EvaluationManager():
         """
         if 'ranking' not in test_df.columns:
             test_df['ranking'] = test_df.groupby(col_name['user_col'])[col_name['pre_col']].rank(ascending=False, method='first')
-        test_gd_df = test_df[(test_df['ranking'] <= k) & (test_df[col_name['label_col']] == 1)].reset_index(drop=True)
-        ndcg_values = []  # 保存每个用户的dcg和idcg
-        for user_id, user_group in test_gd_df.groupby(col_name['user_col']):
+        user_num = test_df[col_name['user_col']].nunique()
+        test_gd_df = test_df[(test_df['ranking'] <= k) & (test_df['ranking'] > 0)]
+        ndcg_values = []  # 保存每个用户的ndcg值
+        total_dcg = 0.0
+        total_idcg = 0.0
+        for _, user_group in test_gd_df.groupby(col_name['user_col']):
             if version == 0:
                 dcg = sum(user_group[col_name['label_col']] / np.log2(user_group['ranking'] + 1))
+                total_dcg += dcg
             else:
                 dcg = sum((2**user_group[col_name['label_col']] - 1) / np.log2(user_group['ranking'] + 1))
             labels_sorted = user_group[col_name['label_col']].sort_values(ascending=False)
             if version == 0:
                 idcg = sum(labels_sorted / np.log2(range(2, len(labels_sorted) + 2)))
+                total_idcg += idcg
             else:
                 idcg = sum((2**labels_sorted - 1) / np.log2(range(2, len(labels_sorted) + 2)))
-            ndcg_values.append((user_id, dcg, idcg))
-        ndcg_values = np.array(ndcg_values)
-        if len(ndcg_values) == 0:
-            return 0
-        ndcg_values = ndcg_values[ndcg_values[:, 2] != 0]  # 防止出现0除
-        return np.mean(ndcg_values[:, 1] / ndcg_values[:, 2])
+            if idcg != 0:
+                ndcg_values.append(dcg / idcg)
+        return np.sum(ndcg_values) / user_num
 
-    def recall(self, test_df: pd.DataFrame, col_name: dict, k: int = 20):
+    def recall_dataframe(self, test_df: pd.DataFrame, col_name: dict, k: int = 20):
         """Recall@k
     
         Args:
@@ -138,7 +141,7 @@ class EvaluationManager():
             if 'ranking' not in test_df.columns:
                 test_df['ranking'] = test_df.groupby(col_name['user_col'])[col_name['pre_col']].rank(ascending=False, method='first')
             user_relevant_items = user_group[user_group['ranking'] <= k]
-            denominator = user_group[col_name['label_col']].sum()
+            denominator = len(user_group)
             if denominator != 0:
                 recall = user_relevant_items[col_name['label_col']].sum() / denominator
             else:
@@ -146,7 +149,7 @@ class EvaluationManager():
             recalls.append(recall)
         return sum(recalls) / len(recalls)
 
-    def Fscore(self, test_df: pd.DataFrame, col_name: dict, k: int = 20, beta: int = 1):
+    def Fscore_dataframe(self, test_df: pd.DataFrame, col_name: dict, k: int = 20, beta: int = 1):
         """F-score@k
 
         Args:
@@ -164,14 +167,14 @@ class EvaluationManager():
                 test_df['ranking'] = test_df.groupby(col_name['user_col'])[col_name['pre_col']].rank(ascending=False, method='first')
             user_relevant_items = user_group[user_group['ranking'] <= k]
             precision = user_relevant_items[col_name['label_col']].sum() / k
-            recall = user_relevant_items[col_name['label_col']].sum() / user_group[col_name['label_col']].sum()
+            recall = user_relevant_items[col_name['label_col']].sum() / len(user_group)
             if precision + recall == 0:
                 fscores.append(0)
             else:
                 fscores.append((1 + beta**2) * precision * recall / (beta**2 * precision + recall))
         return sum(fscores) / len(fscores)
 
-    def gauc(self, test_df: pd.DataFrame, col_name: dict):
+    def gauc_dataframe(self, test_df: pd.DataFrame, col_name: dict):
         """Grouped AUC
         
         Args:
@@ -195,6 +198,139 @@ class EvaluationManager():
             count_user += len(labels[u])
         return count_auc / count_user
 
+    def precision_dict(self, test_gd: dict, pred_gd: dict, k: int = 20):
+        """Precision@k
+
+        Args:
+            test_gd (dict): 测试集
+            pred_gd (dict): 预测集
+            k (int, optional): 排序数量. Defaults to 20.
+
+        Returns:
+            precision (int): 平均准确率
+        """
+        precisions = []
+        for user in test_gd.keys():
+            user_relevant_items = [item for item in pred_gd[user][:k] if item in test_gd[user]]
+            precision = len(user_relevant_items) / k
+            precisions.append(precision)
+        return sum(precisions) / len(precisions)
+
+    def hitrate_dict(self, test_gd: dict, pred_gd: dict, k: int = 20):
+        """基于命中用户的评估指标
+        
+        Args:
+            test_gd (dict): 测试集
+            pred_gd (dict): 预测集
+            k (int, optional): 排序数量. Defaults to 20.
+        
+        Returns:
+            hitrate (int): 命中用户数量比例
+        """
+        hitrate = 0
+        for user in test_gd.keys():
+            if len(set(test_gd[user]) & set(pred_gd[user][:k])) > 0:
+                hitrate += 1
+        return hitrate / len(test_gd)
+
+    def ndcg_dict(self, test_gd: dict, pred_gd: dict, k: int = 20, version: int = 0):
+        """Normalized Discounted Cumulative Gain
+        
+        Args:
+            test_gd (dict): 测试集
+            pred_gd (dict): 预测集
+            k (int, optional): 排序数量. Defaults to 20.
+            version (int, optional): dcg版本. Defaults to 0:rel_i/log2(i+1);1:(2^rel_i-1)/log2(i+1)
+            
+        Returns:
+            ndcg (int): 平均ndcg
+        """
+        total_ndcg = 0.0
+        total_dcg = 0.0
+        total_idcg = 0.0
+        for user in test_gd.keys():
+            if len(test_gd[user]) == 0:
+                continue
+            dcg = 0.0
+            recall = 0
+            item_list = test_gd[user]
+            for no, item_id in enumerate(item_list):
+                if item_id in pred_gd[user][:k]:
+                    recall += 1
+                    dcg += 1.0 / np.log2(pred_gd[user].index(item_id) + 2)
+            idcg = 0.0
+            for no in range(recall):
+                idcg += 1.0 / np.log2(no + 2)
+            if idcg != 0:
+                total_ndcg += dcg / idcg
+            total_dcg += dcg
+            total_idcg += idcg
+        return total_ndcg / len(test_gd)
+
+    def recall_dict(self, test_gd: dict, pred_gd: dict, k: int = 20):
+        """Recall@k
+    
+        Args:
+            test_gd (dict): 测试集
+            pred_gd (dict): 预测集
+            k (int, optional): 排序数量. Defaults to 20.
+    
+        Returns:
+            recall (int): 平均召回率
+        """
+        recalls = []
+        for user in test_gd.keys():
+            user_relevant_items = [item for item in pred_gd[user][:k] if item in test_gd[user]]
+            recall = len(user_relevant_items) / len(test_gd[user])
+            recalls.append(recall)
+        return sum(recalls) / len(recalls)
+
+    def Fscore_dict(self, test_gd: dict, pred_gd: dict, k: int = 20, beta: int = 1):
+        """F-score@k
+
+        Args:
+            test_gd (dict): 测试集
+            pred_gd (dict): 预测集
+            k (int, optional): 排序数量. Defaults to 20.
+            beta (int, optional): beta值. Defaults to 1.
+
+        Returns:
+            fscore (int): 平均F-score
+        """
+        fscores = []
+        for user in test_gd.keys():
+            user_relevant_items = [item for item in pred_gd[user][:k] if item in test_gd[user]]
+            precision = len(user_relevant_items) / k
+            recall = len(user_relevant_items) / len(test_gd[user])
+            if precision + recall == 0:
+                fscores.append(0)
+            else:
+                fscores.append((1 + beta**2) * precision * recall / (beta**2 * precision + recall))
+        return sum(fscores) / len(fscores)
+
+    def gauc_dict(self, test_gd: dict, pred_gd: dict):
+        """Grouped AUC
+        
+        Args:
+            test_gd (dict): 测试集
+            pred_gd (dict): 预测集
+            
+        Returns:
+            gauc (int): 平均gauc
+            
+        Note:
+            - 该函数适用于用户行为序列数据
+        """
+        count_user = 0
+        count_auc = 0
+        for user in test_gd.keys():
+            if np.sum(test_gd[user]) == 0 or np.sum(test_gd[user]) == len(test_gd[user]):
+                continue
+            count_auc += len(test_gd[user]) * roc_auc_score(test_gd[user], pred_gd[user])
+            count_user += len(test_gd[user])
+        return count_auc / count_user
+
+    @time_middleware
     def get_eval_res(
         self,
         mode="train",
@@ -204,6 +340,8 @@ class EvaluationManager():
         loss=None,
         test_df=None,
         col_name=None,
+        test_gd=None,
+        pred_gd=None,
     ):
         """输出评估结果
 
@@ -240,31 +378,55 @@ class EvaluationManager():
             for metric_set in ["train", "valid", "eval"]:
                 if mode == metric_set:
                     for metric in self.metric_func.get(metric_set):
-                        if metric["eval_func"] == "hitrate":
-                            for k in metric.get("k", [20]):
-                                res_dict[f"hitrate@{k}"] = self.hitrate(test_df=test_df, col_name=self.col_name, k=k)
-                        elif metric["eval_func"] == "fscore":
-                            for k in metric.get("k", [20]):
-                                res_dict[f"fscore@{k}"] = self.Fscore(test_df=test_df, col_name=self.col_name, k=k)
-                        elif metric["eval_func"] == "precision":
-                            for k in metric.get("k", [20]):
-                                res_dict[f"precision@{k}"] = self.precision(test_df=test_df, col_name=self.col_name, k=k)
-                        elif metric["eval_func"] == "recall":
-                            for k in metric.get("k", [20]):
-                                res_dict[f"recall@{k}"] = self.recall(test_df=test_df, col_name=self.col_name, k=k)
-                        elif metric["eval_func"] == "mrr":
-                            for k in metric.get("k", [20]):
-                                res_dict[f"mrr@{k}"] = self.mrr(test_df=test_df, col_name=self.col_name, k=k)
-                        elif metric["eval_func"] == "ndcg":
-                            for k in metric.get("k", [20]):
-                                res_dict[f"ndcg@{k}"] = self.ndcg(
-                                    test_df=test_df,
-                                    col_name=self.col_name,
-                                    k=k,
-                                    version=metric.get("version", 0),
-                                )
-                        elif metric["eval_func"] == "gauc":
-                            res_dict["gauc"] = self.gauc(test_df=test_df, col_name=self.col_name)
+                        if test_df is not None and self.col_name:
+                            if metric["eval_func"] == "hitrate":
+                                for k in metric.get("k", [20]):
+                                    res_dict[f"hitrate@{k}"] = self.hitrate_dataframe(test_df=test_df, col_name=self.col_name, k=k)
+                            elif metric["eval_func"] == "fscore":
+                                for k in metric.get("k", [20]):
+                                    res_dict[f"fscore@{k}"] = self.Fscore_dataframe(test_df=test_df, col_name=self.col_name, k=k)
+                            elif metric["eval_func"] == "precision":
+                                for k in metric.get("k", [20]):
+                                    res_dict[f"precision@{k}"] = self.precision_dataframe(test_df=test_df, col_name=self.col_name, k=k)
+                            elif metric["eval_func"] == "recall":
+                                for k in metric.get("k", [20]):
+                                    res_dict[f"recall@{k}"] = self.recall_dataframe(test_df=test_df, col_name=self.col_name, k=k)
+                            elif metric["eval_func"] == "mrr":
+                                for k in metric.get("k", [20]):
+                                    res_dict[f"mrr@{k}"] = self.mrr_dataframe(test_df=test_df, col_name=self.col_name, k=k)
+                            elif metric["eval_func"] == "ndcg":
+                                for k in metric.get("k", [20]):
+                                    res_dict[f"ndcg@{k}"] = self.ndcg_dataframe(
+                                        test_df=test_df,
+                                        col_name=self.col_name,
+                                        k=k,
+                                        version=metric.get("version", 0),
+                                    )
+                            elif metric["eval_func"] == "gauc":
+                                res_dict["gauc"] = self.gauc(test_df=test_df, col_name=self.col_name)
+                        elif test_gd and pred_gd:
+                            if metric["eval_func"] == "hitrate":
+                                for k in metric.get("k", [20]):
+                                    res_dict[f"hitrate@{k}"] = self.hitrate_dict(test_gd=test_gd, pred_gd=pred_gd, k=k)
+                            elif metric["eval_func"] == "fscore":
+                                for k in metric.get("k", [20]):
+                                    res_dict[f"fscore@{k}"] = self.Fscore_dict(test_gd=test_gd, pred_gd=pred_gd, k=k)
+                            elif metric["eval_func"] == "precision":
+                                for k in metric.get("k", [20]):
+                                    res_dict[f"precision@{k}"] = self.precision_dict(test_gd=test_gd, pred_gd=pred_gd, k=k)
+                            elif metric["eval_func"] == "recall":
+                                for k in metric.get("k", [20]):
+                                    res_dict[f"recall@{k}"] = self.recall_dict(test_gd=test_gd, pred_gd=pred_gd, k=k)
+                            elif metric["eval_func"] == "ndcg":
+                                for k in metric.get("k", [20]):
+                                    res_dict[f"ndcg@{k}"] = self.ndcg_dict(
+                                        test_gd=test_gd,
+                                        pred_gd=pred_gd,
+                                        k=k,
+                                        version=metric.get("version", 0),
+                                    )
+                            elif metric["eval_func"] == "gauc":
+                                res_dict["gauc"] = self.gauc_dict(test_gd=test_gd, pred_gd=pred_gd)
                         elif metric["eval_func"] == "auc":
                             if y_true or y_pred:
                                 res_dict["auc"] = self.auc(y_true, y_pred)

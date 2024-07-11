@@ -1,7 +1,7 @@
 '''
 Author       : wyx-hhhh
 Date         : 2024-04-11
-LastEditTime : 2024-07-03
+LastEditTime : 2024-07-11
 Description  : 
 '''
 import pandas as pd
@@ -62,16 +62,18 @@ class GraphNeuralNetworkTrainer(BaseTrainer):
                 train_items = train_gd.get(user_ids[i], [])  # 获取用户的训练集
                 preds[user_ids[i]] = [x for x in list(I[i, :]) if x not in train_items]  # 去除训练集中的item
         # 将preds构建成test_df的格式
-        test_df = []
-        for user in preds:
-            for i, item in enumerate(preds[user]):
-                if item in test_gd[user]:
-                    test_df.append([user, item, i + 1, 1])
-                else:
-                    test_df.append([user, item, i + 1, 0])
-        test_df = pd.DataFrame(test_df, columns=['user_id', 'item_id', 'ranking', 'label'])
+        # test_df = []
+        # for user in test_gd:
+        #     for i, item in enumerate(test_gd[user]):
+        #         if item in preds[user]:
+        #             test_df.append([user, item, preds[user].index(item) + 1, 1])
+        #         else:
+        #             test_df.append([user, item, -1, 0])
+        # test_df = pd.DataFrame(test_df, columns=['user_id', 'item_id', 'ranking', 'label'])
+
         res_dict = self.evaluation_manager.get_eval_res(
-            test_df=test_df,
+            test_gd=test_gd,
+            pred_gd=preds,
             mode="eval",
         )
         return res_dict
