@@ -1,7 +1,7 @@
 '''
 Author       : wyx-hhhh
 Date         : 2024-03-25
-LastEditTime : 2024-06-12
+LastEditTime : 2024-07-18
 Description  : 
 '''
 DATA_CONFIG = {
@@ -44,13 +44,27 @@ DATA_CONFIG = {
             "pre_col": "prediction",
         },
     },
-    "gowalla": {
-        "origin_path": ['data', 'gowalla', 'loc-gowalla_totalCheckins.txt'],
-        "data_path": ['data', 'gowalla', 'gowalla.csv'],
-        "train_path": ['data', 'gowalla', 'train.csv'],
-        "test_path": ['data', 'gowalla', 'test.csv'],
+    "gowalla_dgl": {
+        "origin_path": ['data', 'gowalla_original', 'loc-gowalla_totalCheckins.txt'],
+        "data_path": ['data', 'gowalla_original', 'gowalla.csv'],
+        "train_path": ['data', 'gowalla_original', 'train.csv'],
+        "test_path": ['data', 'gowalla_original', 'test.csv'],
         "sparse_cols": ['user_id', 'item_id'],
         "train_ratio": 0.8,
+        "user_num": 66447,
+        "item_num": 1242326,
+        "col_name": {
+            "user_col": "user_id",
+            "label_col": "label",
+            "pre_col": "prediction",
+        },
+    },
+    "gowalla_matrix": {
+        "train_path": ['data', 'gowalla_matrix', 'train.txt'],
+        "test_path": ['data', 'gowalla_matrix', 'test.txt'],
+        "user_list_path": ['data', 'gowalla_matrix', 'user_list.txt'],
+        "item_list_path": ['data', 'gowalla_matrix', 'item_list.txt'],
+        "s_pre_adj_mat": ['data', 'gowalla_matrix', 's_pre_adj_mat.npz'],
         "user_num": 66447,
         "item_num": 1242326,
         "col_name": {

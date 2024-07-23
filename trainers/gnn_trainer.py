@@ -1,7 +1,7 @@
 '''
 Author       : wyx-hhhh
 Date         : 2024-04-11
-LastEditTime : 2024-07-11
+LastEditTime : 2024-07-23
 Description  : 
 '''
 import pandas as pd
@@ -20,15 +20,18 @@ class GraphNeuralNetworkTrainer(BaseTrainer):
         model.train()
 
         epoch_loss = 0
+        import time
+
+        start = time.time()
         for data in train_loader:
 
             for key in data.keys():
                 data[key] = data[key].to(device)
-
             output = model(data)
             loss = output['loss']
 
             loss.backward()
+            # optimizer.zero_grad()
             optimizer.step()
             model.zero_grad()
 
@@ -37,6 +40,8 @@ class GraphNeuralNetworkTrainer(BaseTrainer):
             loss=epoch_loss / len(train_loader),
             mode="train",
         )
+        end = time.time()
+        self.config["logger"].info(f"Data to device time: {end - start}")
         return res_dict
 
     def test_model(self, model, train_gd, test_gd, hidden_size):
@@ -56,20 +61,11 @@ class GraphNeuralNetworkTrainer(BaseTrainer):
         for i in tqdm(range(0, len(test_user_list), 1000)):
             user_ids = test_user_list[i:i + 1000]  # 每次取1000个用户
             batch_user_emb = user_embs[user_ids, :]  # 取出这1000个用户的embedding
-            D, I = faiss_index.search(batch_user_emb, 100)  # 检索最相似的100个item
+            D, I = faiss_index.search(batch_user_emb, 50)  # 检索最相似的100个item
 
             for i, uid_list in enumerate(user_ids):  # 遍历每个用户
                 train_items = train_gd.get(user_ids[i], [])  # 获取用户的训练集
                 preds[user_ids[i]] = [x for x in list(I[i, :]) if x not in train_items]  # 去除训练集中的item
-        # 将preds构建成test_df的格式
-        # test_df = []
-        # for user in test_gd:
-        #     for i, item in enumerate(test_gd[user]):
-        #         if item in preds[user]:
-        #             test_df.append([user, item, preds[user].index(item) + 1, 1])
-        #         else:
-        #             test_df.append([user, item, -1, 0])
-        # test_df = pd.DataFrame(test_df, columns=['user_id', 'item_id', 'ranking', 'label'])
 
         res_dict = self.evaluation_manager.get_eval_res(
             test_gd=test_gd,

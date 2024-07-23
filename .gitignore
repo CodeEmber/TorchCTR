@@ -20,3 +20,5 @@ global_config.py
 *.jpg
 test.py
 .history
+.*.cpp
+*.so

@@ -1,7 +1,7 @@
 '''
 Author       : wyx-hhhh
 Date         : 2024-05-22
-LastEditTime : 2024-07-11
+LastEditTime : 2024-07-22
 Description  : 
 '''
 
@@ -246,25 +246,18 @@ class EvaluationManager():
             ndcg (int): 平均ndcg
         """
         total_ndcg = 0.0
-        total_dcg = 0.0
-        total_idcg = 0.0
         for user in test_gd.keys():
             if len(test_gd[user]) == 0:
                 continue
             dcg = 0.0
-            recall = 0
+            idcg = 0.0
             item_list = test_gd[user]
             for no, item_id in enumerate(item_list):
                 if item_id in pred_gd[user][:k]:
-                    recall += 1
                     dcg += 1.0 / np.log2(pred_gd[user].index(item_id) + 2)
-            idcg = 0.0
-            for no in range(recall):
-                idcg += 1.0 / np.log2(no + 2)
-            if idcg != 0:
+            idcg = np.sum(1.0 / np.log2(np.arange(2, min(len(item_list) + 2, k + 2))))
+            if dcg != 0:
                 total_ndcg += dcg / idcg
-            total_dcg += dcg
-            total_idcg += idcg
         return total_ndcg / len(test_gd)
 
     def recall_dict(self, test_gd: dict, pred_gd: dict, k: int = 20):
@@ -330,7 +323,6 @@ class EvaluationManager():
             count_user += len(test_gd[user])
         return count_auc / count_user
 
-    @time_middleware
     def get_eval_res(
         self,
         mode="train",
@@ -450,8 +442,8 @@ class EvaluationManager():
                         else:
                             raise ValueError("eval_func error")
                     return res_dict
-        except:
-            raise ValueError("metric_func error")
+        except Exception as e:
+            raise ValueError("metric_func error, ", e)
 
 
 if __name__ == "__main__":

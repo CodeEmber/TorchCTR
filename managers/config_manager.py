@@ -93,5 +93,5 @@ class ConfigManager():
         self._check_params()
         all_config = {**self.global_config, **self.data_config, **self.train_config}
         self._log_params(all_config)
-        self.logger.send_message({**self.data_config, **self.train_config}, message_type=0, message_content_type=0)
+        # self.logger.send_message({**self.data_config, **self.train_config}, message_type=0, message_content_type=0)
         return all_config

@@ -156,7 +156,7 @@ class SaveManager():
             self.save_model(model=model, epoch=epoch)
         if is_save_tensorboard:
             self.save_tensorboardx(
-                epoch=epoch + 1,
+                epoch=epoch,
                 train_metric=train_metric,
                 valid_metric=valid_metric,
                 test_metric=test_metric,
@@ -168,7 +168,7 @@ class SaveManager():
                     'train': train_metric,
                     'valid': valid_metric,
                     'test': test_metric,
-                    "epoch": epoch + 1,
+                    "epoch": epoch,
                     "time": set_timestamp()
                 },
                 other_metric,

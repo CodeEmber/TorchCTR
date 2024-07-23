@@ -1,7 +1,7 @@
 '''
 Author       : wyx-hhhh
 Date         : 2023-10-28
-LastEditTime : 2024-04-25
+LastEditTime : 2024-07-18
 Description  : 
 '''
 import pandas as pd
@@ -9,7 +9,8 @@ import pandas as pd
 from data.criteo.process_data import CriteoProcessData
 from data.movielens.process_data import MovieLenProcessData
 from data.amazon.process_data import AmazonProcessData
-from data.gowalla.process_data import GowallaProcessData
+from data.gowalla_dgl.process_data import GowallaProcessDglData
+from data.gowalla_matrix.process_data import GowallaProcessMatrixData
 from data.pixelrec.process_data import PixelRecProcessData
 
 
@@ -26,8 +27,10 @@ class DataManager():
             data = MovieLenProcessData(config=self.config)
         elif self.config["data"] == "amazon":
             data = AmazonProcessData(config=self.config)
-        elif self.config["data"] == "gowalla":
-            data = GowallaProcessData(config=self.config)
+        elif self.config["data"] == "gowalla_dgl":
+            data = GowallaProcessDglData(config=self.config)
+        elif self.config["data"] == "gowalla_matrix":
+            data = GowallaProcessMatrixData(config=self.config)
         elif self.config["data"] == "pixelrec":
             data = PixelRecProcessData(config=self.config)
         else:

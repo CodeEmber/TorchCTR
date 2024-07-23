@@ -1,7 +1,7 @@
 '''
 Author       : wyx-hhhh
 Date         : 2023-10-28
-LastEditTime : 2024-06-04
+LastEditTime : 2024-07-22
 Description  : 
 '''
 import subprocess
@@ -12,7 +12,7 @@ import os
 
 os.environ["MKL_THREADING_LAYER"] = "GNU"
 
-models = ["ddin"]
+models = ["lightgcn_matrix"]
 for model in models:
     try:
         start_time = time.time()
@@ -26,10 +26,10 @@ for model in models:
         logger.info(f"运行{model}模型成功，耗时{int(hours):0>2}:{int(minutes):0>2}:{seconds:05.2f}")
         logger.send_message("运行{}模型成功，耗时{:0>2}:{:0>2}:{:05.2f}".format(model, int(hours), int(minutes), seconds), message_type=2, mention=True)
     except subprocess.CalledProcessError as e:
-        logger.error(f"运行{model}失败，错误信息如下：{e.stderr.decode('utf-8')}")
+        logger.error(f"运行{model}失败", e)
         continue
     except Exception as e:
-        logger.error(f"运行{model}失败，错误信息如下：{traceback.format_exc()}")
+        logger.error(f"运行{model}失败", e)
         continue
 
 # results_path = get_file_path(['results'])
