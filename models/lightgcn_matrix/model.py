@@ -79,7 +79,7 @@ class LightGCN(nn.Module):
             g_droped = self.g
 
         # Propagate embeddings through the layers
-        for _ in range(len(self.hidden_units)):
+        for _ in range(len(self.hidden_units) - 1):
             if self.config['is_split']:
                 temp_emb = []
                 for f in range(len(g_droped)):
