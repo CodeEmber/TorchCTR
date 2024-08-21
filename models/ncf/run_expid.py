@@ -1,7 +1,7 @@
 '''
 Author       : wyx-hhhh
 Date         : 2023-10-28
-LastEditTime : 2024-06-12
+LastEditTime : 2024-08-14
 Description  : 
 '''
 
@@ -34,7 +34,6 @@ for i in range(config['epoch']):
         epoch=i,
         train_metric=train_metric,
         model=model,
-        is_clear=True,
     )
     logger.info(f"Epoch: {i + 1}")
     logger.info(f"Train Metric: {train_metric}")

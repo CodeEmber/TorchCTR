@@ -1,7 +1,7 @@
 '''
 Author       : wyx-hhhh
 Date         : 2024-06-26
-LastEditTime : 2024-07-23
+LastEditTime : 2024-08-21
 Description  : 
 '''
 import torch
@@ -36,31 +36,30 @@ save_manager = SaveManager(config=config, logger=logger)
 device = set_device(config['device'])
 graph_data = graph_data.to(device)
 model = LightGCN(config=config, g=graph_data)
-optimizer = torch.optim.Adam(model.parameters(), lr=config['lr'], betas=(0.9, 0.999), eps=1e-08, weight_decay=0)
+optimizer = torch.optim.Adam(model.parameters(), lr=config['lr'])
 model = model.to(device)
 logger.send_message(config, message_type=0, message_content_type=0)
 for i in range(config['epoch']):
-    train_metric = train_manager.train_model(model, train_dataloader, optimizer=optimizer, device=device)
+    if config.get("early_stop", False):
+        break
+    train_metric = train_manager.train_model(
+        model,
+        train_dataloader,
+        optimizer=optimizer,
+        device=device,
+        epoch=i,
+    )
 
-    logger.info(f"Epoch: {i + 1}")
-    logger.info(f"Train Metric: {train_metric}")
     #模型验证
     test_metric = None
     if i % 5 == 0 or i == config['epoch'] - 1:
-        test_metric = train_manager.test_model(
-            model,
-            train_grouped_data,
-            test_grouped_data,
-            config['embedding_dim'],
-        )
+        test_metric = train_manager.test_model(model, train_grouped_data, test_grouped_data, config['embedding_dim'], epoch=i)
 
-        logger.info(f"Epoch {i} Test Metric: {test_metric}")
-    save_manager.save_all(
-        epoch=i,
-        train_metric=train_metric,
-        valid_metric=None,
-        test_metric=test_metric,
-        other_metric=None,
-        model=model,
-        is_clear=True,
-    )
+    # save_manager.save_all(
+    #     epoch=i,
+    #     train_metric=train_metric,
+    #     valid_metric=None,
+    #     test_metric=test_metric,
+    #     other_metric=None,
+    #     model=model,
+    # )

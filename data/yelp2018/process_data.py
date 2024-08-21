@@ -4,17 +4,16 @@ Date         : 2024-04-08
 LastEditTime : 2024-08-14
 Description  : 
 '''
-from multiprocessing import process
 import pandas as pd
 from torch.utils.data import Dataset
-from data.yelp2018.dataset import get_gowalla_matrix_dataset
+from data.gowalla_matrix.dataset import get_gowalla_matrix_dataset
 from managers.logger_manager import logger
 from data.base_process_data import BaseProcessData
 from utils.file_utils import get_file_path
 import numpy as np
 
 
-class GowallaProcessMatrixData(BaseProcessData):
+class YelpProcessData(BaseProcessData):
 
     def __init__(self, config: dict) -> None:
         super().__init__(config)

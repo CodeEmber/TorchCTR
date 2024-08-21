@@ -1,7 +1,7 @@
 '''
 Author       : wyx-hhhh
 Date         : 2024-03-25
-LastEditTime : 2024-07-18
+LastEditTime : 2024-08-16
 Description  : 
 '''
 DATA_CONFIG = {
@@ -65,8 +65,30 @@ DATA_CONFIG = {
         "user_list_path": ['data', 'gowalla_matrix', 'user_list.txt'],
         "item_list_path": ['data', 'gowalla_matrix', 'item_list.txt'],
         "s_pre_adj_mat": ['data', 'gowalla_matrix', 's_pre_adj_mat.npz'],
-        "user_num": 66447,
-        "item_num": 1242326,
+        "col_name": {
+            "user_col": "user_id",
+            "label_col": "label",
+            "pre_col": "prediction",
+        },
+    },
+    "amazon_book": {
+        "train_path": ['data', 'amazon_book', 'train.txt'],
+        "test_path": ['data', 'amazon_book', 'test.txt'],
+        "user_list_path": ['data', 'amazon_book', 'user_list.txt'],
+        "item_list_path": ['data', 'amazon_book', 'item_list.txt'],
+        "s_pre_adj_mat": ['data', 'amazon_book', 's_pre_adj_mat.npz'],
+        "col_name": {
+            "user_col": "user_id",
+            "label_col": "label",
+            "pre_col": "prediction",
+        },
+    },
+    "yelp2018": {
+        "train_path": ['data', 'yelp2018', 'train.txt'],
+        "test_path": ['data', 'yelp2018', 'test.txt'],
+        "user_list_path": ['data', 'yelp2018', 'user_list.txt'],
+        "item_list_path": ['data', 'yelp2018', 'item_list.txt'],
+        "s_pre_adj_mat": ['data', 'yelp2018', 's_pre_adj_mat.npz'],
         "col_name": {
             "user_col": "user_id",
             "label_col": "label",

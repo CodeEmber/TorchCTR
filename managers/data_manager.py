@@ -1,17 +1,19 @@
 '''
 Author       : wyx-hhhh
 Date         : 2023-10-28
-LastEditTime : 2024-07-18
+LastEditTime : 2024-08-11
 Description  : 
 '''
 import pandas as pd
 
+from data.amazon_book.process_data import AmazonBookProcessData
 from data.criteo.process_data import CriteoProcessData
 from data.movielens.process_data import MovieLenProcessData
 from data.amazon.process_data import AmazonProcessData
 from data.gowalla_dgl.process_data import GowallaProcessDglData
 from data.gowalla_matrix.process_data import GowallaProcessMatrixData
 from data.pixelrec.process_data import PixelRecProcessData
+from data.yelp2018.process_data import YelpProcessData
 
 
 class DataManager():
@@ -33,6 +35,10 @@ class DataManager():
             data = GowallaProcessMatrixData(config=self.config)
         elif self.config["data"] == "pixelrec":
             data = PixelRecProcessData(config=self.config)
+        elif self.config["data"] == "amazon_book":
+            data = AmazonBookProcessData(config=self.config)
+        elif self.config["data"] == "yelp2018":
+            data = YelpProcessData(config=self.config)
         else:
             raise ValueError("数据集错误")
         return data

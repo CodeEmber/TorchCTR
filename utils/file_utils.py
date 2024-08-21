@@ -1,7 +1,7 @@
 '''
 Author       : wyx-hhhh
 Date         : 2023-10-28
-LastEditTime : 2024-06-17
+LastEditTime : 2024-08-14
 Description  : 
 '''
 import os
@@ -50,22 +50,18 @@ def get_new_file_path(path: List[str] = [], add_sep_before=False, add_sep_affter
     return file_new
 
 
-def check_folder(folder_path: str):
-    """检查文件夹是否存在，如果不存在则创建
+def check_path(path: str):
+    """检查路径是否存在，如果不存在则创建文件夹或文件
 
     Args:
-        folder_path (str): 文件夹路径
+        path (str): 文件或文件夹路径
     """
-    if not os.path.exists(folder_path):
-        os.makedirs(folder_path)
-
-
-def check_file(file_path: str):
-    """检查文件是否存在，如果不存在则创建
-
-    Args:
-        file_path (str): 文件路径
-    """
-    if not os.path.exists(file_path):
-        with open(file_path, 'w') as f:
-            pass
+    if os.path.isdir(path):
+        if not os.path.exists(path):
+            os.makedirs(path)
+    elif os.path.isfile(path):
+        if not os.path.exists(path):
+            with open(path, 'w') as f:
+                pass
+    else:
+        os.makedirs(path)

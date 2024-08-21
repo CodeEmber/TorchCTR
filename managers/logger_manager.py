@@ -2,7 +2,7 @@
 Description  : 日志文件配置
 Author       : wyx-hhhh
 Date         : 2022-01-24 17:26:50
-LastEditTime : 2024-06-28
+LastEditTime : 2024-08-14
 LastEditors  : Please set LastEditors
 '''
 import logging.config
@@ -28,7 +28,8 @@ class LoggerManager():
         file_name = file_name.split('/')[-2] + '/' + file_name.split('/')[-1]
         line_number = frame_info.lineno
         func_name = frame_info.function
-        log_message = f"[{file_name}:{line_number}:{func_name}] {message} "
+        # log_message = f"[{file_name}:{line_number}:{func_name}] {message} "
+        log_message = f"{message} "
         self.logger.log(logging.getLevelName(level.upper()), log_message)
 
     def info(self, message):

@@ -57,8 +57,8 @@ class GPUMonitor():
             self.gpu_info["device"].sort(key=lambda x: x["free_mem"], reverse=True)
 
     def run(self):
-        cycle_num = self.config.get("cycle_num", 30)
-        while cycle_num > 0:
+        gpu_cycle_num = self.config.get("gpu_cycle_num", 30)
+        while gpu_cycle_num > 0:
             self.get_gpu_info()
             if self.gpu_info["num_device"] == 0:
                 self.config["device"] = -1
@@ -76,4 +76,4 @@ class GPUMonitor():
                 self.logger.info("GPU资源不足，等待10分钟后重新检查")
                 self.logger.send_message("GPU资源不足，等待10分钟后重新检查", message_type=1, message_content_type=1)
                 time.sleep(600)
-                cycle_num -= 1
+                gpu_cycle_num -= 1

@@ -28,7 +28,7 @@ except:
     is_cython = False
 
 
-class GowallaMatrixDataset(Dataset):
+class YelpDataset(Dataset):
 
     def __init__(self, df: pd.DataFrame, config: dict, phase: str = 'train'):
         self.config = config
@@ -39,7 +39,7 @@ class GowallaMatrixDataset(Dataset):
         self.generate_grouped_data()
         self.Graph = None
         self.neg_samples = []
-        self.UserItemNet = csr_matrix((np.ones(len(self.df)), (self.df['user_id'], self.df['item_id'])), shape=(self.user_num, self.item_num))
+
         if phase == 'train':
             self.negative_sampling()
             self.encode_data()
@@ -142,6 +142,6 @@ class GowallaMatrixDataset(Dataset):
             return self.df['user_id'].nunique()
 
 
-def get_gowalla_matrix_dataset(data: str, config: dict, phase: dict) -> GowallaMatrixDataset:
-    dataset = GowallaMatrixDataset(data, config, phase)
+def get_gowalla_matrix_dataset(data: str, config: dict, phase: dict) -> YelpDataset:
+    dataset = YelpDataset(data, config, phase)
     return dataset

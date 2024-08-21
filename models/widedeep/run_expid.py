@@ -33,7 +33,6 @@ for i in range(config['epoch']):
         epoch=i,
         train_metric=train_metric,
         model=model,
-        is_clear=True,
     )
     logger.info(f"Epoch: {i + 1}")
     logger.info(f"Train Metric: {train_metric}")

@@ -1,11 +1,14 @@
 '''
 Author       : wyx-hhhh
 Date         : 2023-10-30
-LastEditTime : 2024-03-22
+LastEditTime : 2024-08-20
 Description  : 
 '''
 import time
 from datetime import datetime
+
+import numpy as np
+import torch
 
 
 def get_current_time() -> datetime:
@@ -28,10 +31,18 @@ def format_time(timestamp):
     """将时间戳转换为特定格式的时间字符串"""
     if isinstance(timestamp, int):
         time_obj = datetime.fromtimestamp(timestamp)
-        return time_obj.strftime("%Y-%m-%d %H:%M:%S")
+        return time_obj.strftime("%Y-%m-%d-%H-%M")
     else:
         raise TypeError("timestamp的类型应为int")
 
 
 def get_values_by_keys(data, keys):
     return tuple(data[key] for key in keys)
+
+
+def set_seed(seed):
+    np.random.seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)
+    torch.manual_seed(seed)

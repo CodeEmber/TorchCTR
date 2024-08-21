@@ -1,7 +1,7 @@
 '''
 Author       : wyx-hhhh
 Date         : 2024-06-26
-LastEditTime : 2024-07-13
+LastEditTime : 2024-08-14
 Description  : 
 '''
 import torch
@@ -68,5 +68,4 @@ for i in range(config['epoch']):
         test_metric=test_metric,
         other_metric=None,
         model=model,
-        is_clear=True,
     )

@@ -1,20 +1,19 @@
 '''
 Author       : wyx-hhhh
 Date         : 2024-04-08
-LastEditTime : 2024-08-14
+LastEditTime : 2024-08-16
 Description  : 
 '''
-from multiprocessing import process
 import pandas as pd
 from torch.utils.data import Dataset
-from data.yelp2018.dataset import get_gowalla_matrix_dataset
+from data.amazon_book.dataset import get_amazon_book_dataset
 from managers.logger_manager import logger
 from data.base_process_data import BaseProcessData
 from utils.file_utils import get_file_path
 import numpy as np
 
 
-class GowallaProcessMatrixData(BaseProcessData):
+class AmazonBookProcessData(BaseProcessData):
 
     def __init__(self, config: dict) -> None:
         super().__init__(config)
@@ -42,6 +41,8 @@ class GowallaProcessMatrixData(BaseProcessData):
             for l in f.readlines():
                 if len(l) > 0:
                     l = l.strip('\n').split(' ')
+                    if len(l) > 1 and l[1] == '':
+                        continue
                     items = [int(i) for i in l[1:]]
                     test_data += [(int(l[0]), i) for i in items]
                     user_num = max(user_num, int(l[0]))
@@ -90,5 +91,5 @@ class GowallaProcessMatrixData(BaseProcessData):
         return result_dict
 
     def get_dataset(self, data: pd.DataFrame, phase: str) -> Dataset:
-        dataset = get_gowalla_matrix_dataset(data, self.config, phase)
+        dataset = get_amazon_book_dataset(data, self.config, phase)
         return dataset

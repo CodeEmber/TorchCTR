@@ -1,7 +1,7 @@
 '''
 Author       : wyx-hhhh
 Date         : 2023-10-28
-LastEditTime : 2024-07-22
+LastEditTime : 2024-08-20
 Description  : 
 '''
 import subprocess
@@ -26,10 +26,10 @@ for model in models:
         logger.info(f"运行{model}模型成功，耗时{int(hours):0>2}:{int(minutes):0>2}:{seconds:05.2f}")
         logger.send_message("运行{}模型成功，耗时{:0>2}:{:0>2}:{:05.2f}".format(model, int(hours), int(minutes), seconds), message_type=2, mention=True)
     except subprocess.CalledProcessError as e:
-        logger.error(f"运行{model}失败", e)
+        logger.error(f"运行{model}失败,{traceback.format_exc()}")
         continue
     except Exception as e:
-        logger.error(f"运行{model}失败", e)
+        logger.error(f"运行{model}失败,{traceback.format_exc()}")
         continue
 
 # results_path = get_file_path(['results'])

@@ -28,7 +28,7 @@ except:
     is_cython = False
 
 
-class GowallaMatrixDataset(Dataset):
+class AmazonBookDataset(Dataset):
 
     def __init__(self, df: pd.DataFrame, config: dict, phase: str = 'train'):
         self.config = config
@@ -142,6 +142,6 @@ class GowallaMatrixDataset(Dataset):
             return self.df['user_id'].nunique()
 
 
-def get_gowalla_matrix_dataset(data: str, config: dict, phase: dict) -> GowallaMatrixDataset:
-    dataset = GowallaMatrixDataset(data, config, phase)
+def get_amazon_book_dataset(data: str, config: dict, phase: dict) -> AmazonBookDataset:
+    dataset = AmazonBookDataset(data, config, phase)
     return dataset
