@@ -1,12 +1,12 @@
 '''
 Author       : wyx-hhhh
 Date         : 2024-04-08
-LastEditTime : 2024-04-08
+LastEditTime : 2024-09-04
 Description  : 
 '''
 import pandas as pd
 
-from utils.file_utils import get_file_path
+from utils.utilities import get_file_path
 
 
 def split_gowalla_data():
@@ -37,6 +37,41 @@ def get_gowalla_num():
     return user_num, item_num
 
 
+# 处理数据集
+def process_data1(path):
+    # 读取txt文件
+    data = []
+    with open(path) as f:
+        for l in f.readlines():
+            if len(l) > 0:
+                l = l.strip('\n').split(' ')
+                if len(l) > 1 and l[1] == '':
+                    continue
+                items = [int(i) for i in l[1:]]
+                data += [(int(l[0]), i) for i in items]
+    # 将读取到的data重新存储为txt文件
+    with open(path, "w") as f:
+        for d in data:
+            f.write(f"{d[0]} {d[1]}\n")
+
+
+def process_data2(path):
+    # 读取txt文件
+    data = []
+    with open(path) as f:
+        for l in f.readlines():
+            if len(l) > 0:
+                l = l.strip('\n').split(' ')
+                items = [int(i) for i in l[1:-1]]
+                data += [(int(l[0]), i) for i in items]
+    # 将读取到的data重新存储为txt文件
+    with open(path, "w") as f:
+        for d in data:
+            f.write(f"{d[0]} {d[1]}\n")
+
+
 if __name__ == "__main__":
-    split_gowalla_data()
-    print(get_gowalla_num())
+    # process_data2(path=get_file_path(path=["data", "amazon_kindle", "train.txt"]))
+    # process_data2(path=get_file_path(path=["data", "amazon_kindle", "test.txt"]))
+    process_data2(path=get_file_path(path=["data", "douban_book", "test.txt"]))
+    process_data2(path=get_file_path(path=["data", "douban_book", "train.txt"]))

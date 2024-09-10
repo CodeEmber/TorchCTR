@@ -1,7 +1,7 @@
 '''
 Author       : wyx-hhhh
 Date         : 2024-05-22
-LastEditTime : 2024-07-22
+LastEditTime : 2024-08-27
 Description  : 
 '''
 
@@ -9,21 +9,17 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import log_loss, roc_auc_score
 
-from managers.logger_manager import LoggerManager
-from utils.middleware import time_middleware
-
 
 class EvaluationManager():
 
     def __init__(
         self,
         config: dict = {},
-        logger: LoggerManager = {},
     ):
         self.config = config
         self.metric_func = config.get("metric_func", dict())
         self.col_name = config.get("col_name", dict())
-        self.logger = logger
+        self.logger = config['logger']
 
     def logloss(self, y_true, y_pred):
         return log_loss(np.concatenate(y_true), np.concatenate(y_pred), eps=1e-7)

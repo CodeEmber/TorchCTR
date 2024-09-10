@@ -9,7 +9,7 @@ import logging.config
 import requests
 import json
 from config.global_config import GOLBAL_CONFIG
-from utils.file_utils import get_file_path
+from utils.utilities import get_file_path
 from utils.utilities import format_time
 import inspect
 

@@ -1,21 +1,23 @@
 import json
+from math import e
 import os
 import shutil
 from typing import List
 
+from attr import s
 import numpy as np
 import pandas as pd
 import torch
-from utils.file_utils import check_path, get_file_path
+from utils.utilities import check_path, get_file_path
 from torch.utils.tensorboard.writer import SummaryWriter
 import torch.nn as nn
 
-from utils.utilities import format_time, get_current_time, set_timestamp
+from utils.utilities import clean_data, format_time, get_current_time, set_timestamp
 
 
 class EarlyStopping:
 
-    def __init__(self, patience=5, verbose=False, mode='min'):
+    def __init__(self, patience=5, verbose=False, mode='min', config={}):
         self.patience = patience
         self.verbose = verbose
         self.counter = 0
@@ -23,35 +25,43 @@ class EarlyStopping:
         self.early_stop = False
         self.mode = mode  # 'min' 或 'max'
         self.best_model = None
+        self.config = config
 
-    def __call__(self, score, model):
+    def __call__(self, metric, model, epoch):
+        score = metric[self.config['early_stopping_score']]
         if self.best_score is None:
             self.best_score = score
-            self.best_model = model.state_dict()  # 保存最佳模型
+            self.best_model = model.state_dict()
+            self.best_metric = {"metric": metric, "epoch": epoch}
+            self.config["best_metric"] = self.best_metric
         elif (self.mode == 'min' and score < self.best_score) or (self.mode == 'max' and score > self.best_score):
-            self.best_score = score
             self.counter = 0
-            self.best_model = model.state_dict()  # 保存最佳模型
+            self.best_score = score
+            self.best_model = model.state_dict()
+            self.best_metric = {"metric": metric, "epoch": epoch}
+            self.config["best_metric"] = self.best_metric
         else:
             self.counter += 1
             if self.verbose:
-                print(f'EarlyStopping counter: {self.counter} out of {self.patience}')
+                self.config["logger"].info(f'EarlyStopping counter: {self.counter} out of {self.patience}')
+                self.config["logger"].send_message(f'EarlyStopping counter: {self.counter} out of {self.patience}', message_type=1, message_content_type=1)
             if self.counter >= self.patience:
                 self.early_stop = True  # 触发早停
 
 
 class SaveManager():
 
-    def __init__(self, config: dict, logger):
+    def __init__(self, config: dict):
         self.config = config
         self.model_name = config['model_name']
         self.data_name = config['data']
-        self.logger = logger
+        self.logger = config["logger"]
         self._get_save_path()
         self.early_stopping = EarlyStopping(
             patience=config['early_stopping_patience'],
             mode=config['early_stopping_mode'],
             verbose=config["is_verbose"],
+            config=config,
         )
 
     def _get_save_path(self):
@@ -60,14 +70,17 @@ class SaveManager():
         self.model_save_path = get_file_path([self.root_path, "save_model", f"{self.model_name}_{self.data_name}_{time_str}.pth"])
         self.tensorboardx_save_path = get_file_path([self.root_path, "save_tensorboard", f"{self.model_name}_{self.data_name}_{time_str}"])
         self.evaluation_save_path = get_file_path([self.root_path, "evaluation", f"{self.model_name}_{self.data_name}_{time_str}.json"])
+        self.run_info_path = get_file_path([self.root_path, "run_info", f"{self.model_name}_{self.data_name}_{time_str}.json"])
         check_path(self.root_path)
         check_path(get_file_path([self.root_path, "save_model"]))
         check_path(get_file_path([self.root_path, "save_tensorboard"]))
         check_path(get_file_path([self.root_path, "evaluation"]))
+        check_path(get_file_path([self.root_path, "run_info"]))
         save_path_dict = {
             "model_save_path": self.model_save_path,
             "tensorboardx_save_path": self.tensorboardx_save_path,
             "evaluation_save_path": self.evaluation_save_path,
+            "run_info_path": self.run_info_path,
         }
         self.logger.info("Save Path:")
         for k, v in save_path_dict.items():
@@ -137,13 +150,17 @@ class SaveManager():
         check_path(file_path)
         data = pd.DataFrame(data)
         data.to_csv(file_path, index=False)
-        self.logger.info(f"保存{file_path}成功")
 
     def save_json(self, data: dict, file_path: str):
-        check_path(file_path)
         with open(file_path, 'w') as f:
             json.dump(data, f)
-        self.logger.info(f"保存{file_path}成功")
+
+    def save_run_info(self, run_info: dict):
+        if self.config.get("is_saved", True):
+            if self.config.get("is_save_run_info", True):
+                cleaned_run_info = clean_data(run_info)
+                self.save_json(cleaned_run_info, self.run_info_path)
+                self.config["logger"].send_message(cleaned_run_info, message_type=2, message_content_type=0)
 
     def save_all(
         self,
@@ -169,30 +186,31 @@ class SaveManager():
             other_metric (dict): 其他评估结果
         """
         if test_metric:
-            self.early_stopping(test_metric[self.config["early_stopping_score"]], model)
+            self.early_stopping(test_metric, model, epoch)
         if valid_metric:
-            self.early_stopping(valid_metric[self.config["early_stopping_score"]], model)
+            self.early_stopping(valid_metric, model, epoch)
         if self.early_stopping.early_stop:
             self.config["early_stop"] = True
-        if self.config["is_save_model"]:
-            if epoch == 0 or self.early_stopping.early_stop:
-                self.save_model(model=self.early_stopping.best_model)
-        if self.config["is_save_tensorboard"]:
-            self.save_tensorboardx(
-                epoch=epoch,
-                train_metric=train_metric,
-                valid_metric=valid_metric,
-                test_metric=test_metric,
-                other_metric=other_metric,
-            )
-        if self.config["is_save_evaluation"]:
-            self.save_evaluation_results(metric=[
-                {
-                    'train': train_metric,
-                    'valid': valid_metric,
-                    'test': test_metric,
-                    "epoch": epoch,
-                    "time": set_timestamp()
-                },
-                other_metric,
-            ], )
+        if self.config.get("is_saved", True):
+            if self.config["is_save_model"]:
+                if epoch == 0 or self.early_stopping.early_stop:
+                    self.save_model(model=self.early_stopping.best_model)
+            if self.config["is_save_tensorboard"]:
+                self.save_tensorboardx(
+                    epoch=epoch,
+                    train_metric=train_metric,
+                    valid_metric=valid_metric,
+                    test_metric=test_metric,
+                    other_metric=other_metric,
+                )
+            if self.config["is_save_evaluation"]:
+                self.save_evaluation_results(metric=[
+                    {
+                        'train': train_metric,
+                        'valid': valid_metric,
+                        'test': test_metric,
+                        "epoch": epoch,
+                        "time": set_timestamp()
+                    },
+                    other_metric,
+                ], )

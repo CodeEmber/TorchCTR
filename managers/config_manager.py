@@ -1,7 +1,7 @@
 '''
 Author       : wyx-hhhh
 Date         : 2024-03-24
-LastEditTime : 2024-08-14
+LastEditTime : 2024-08-26
 Description  : 
 '''
 from config.data_config import DATA_CONFIG
@@ -52,6 +52,17 @@ class ConfigManager():
         }
         self.global_config = {}
         self.required_params = ["data", "model_name", "trainer"]
+
+    def _get_train_config(self):
+        train_config = self.train_config.copy()
+        default_config = train_config.pop("default", {})
+        data_specific_config = train_config.pop("data_specific_config", {}).get(train_config.get("data"), {})
+
+        # 更新配置
+        train_config.update(default_config)
+        train_config.update(data_specific_config)
+
+        self.train_config = train_config
 
     def _get_data_config(self):
         self.data_config = DATA_CONFIG.get(self.train_config.get('data'))
@@ -105,12 +116,15 @@ class ConfigManager():
         self.logger.info("\n")
 
     def get_config(self):
+        self._get_train_config()
         self._get_data_config()
         self._get_global_config()
         self._get_save_config()
         self.logger = LoggerManager(config=self.global_config)
-        GPUMonitor(config=self.train_config, logger=self.logger)
         self._check_params()
         all_config = {**self.global_config, **self.data_config, **self.save_config, **self.train_config}
+        if all_config.get("is_auto_gpu", True):
+            GPUMonitor(config=self.train_config, logger=self.logger)
+            all_config.update({"device": self.train_config["device"]})
         self._log_params(all_config)
         return all_config

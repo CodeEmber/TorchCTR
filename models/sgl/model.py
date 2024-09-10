@@ -1,25 +1,42 @@
 '''
 Author       : wyx-hhhh
 Date         : 2024-07-09
-LastEditTime : 2024-08-16
+LastEditTime : 2024-09-06
 Description  : 
 '''
 from typing import List
+import numpy as np
+import scipy.sparse as sp
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
+from base.graph_recommender import GraphRecommender
+from utils.torch_loss import BPRLoss, InfoNCELoss, L2RegLoss
+from utils.utilities import get_file_path
+from utils.middleware import time_middleware
 from utils.utilities import get_values_by_keys
 
 
-class SGL(nn.Module):
+class SGL(GraphRecommender):
+
+    def __init__(self, train_config):
+        super(SGL, self).__init__(train_config)
+        self.model = SGLModel(self.config, self.data_dict["graph_data"])
+        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.config['lr'])
+
+    def train(self):
+        self.model.generation_augmented_graph()
+        super(SGL, self).train()
+
+
+class SGLModel(nn.Module):
 
     def __init__(
         self,
         config: dict,
         g,
     ):
-        super(SGL, self).__init__()
+        super(SGLModel, self).__init__()
         self.config = config
         self.g = g
         self.user_num = self.config['user_num']
@@ -31,14 +48,23 @@ class SGL(nn.Module):
         self.lmbd_ssl = self.config['lmbd_ssl']
         self.aug_type = self.config['aug_type']
         self.dropout_ratio = self.config['dropout_ratio']
-        self.ssl_tau = self.config['ssl_tau']
-        self.generation_augmented_graph()
-        self.user_embedding_layer = nn.Embedding(self.user_num, self.embedding_dim)
-        self.item_embedding_layer = nn.Embedding(self.item_num, self.embedding_dim)
+        self.cl_tau = self.config['cl_tau']
+        self.user_embedding_layer = nn.Embedding(self.user_num, self.embedding_dim).to(self.config["device"])
+        self.item_embedding_layer = nn.Embedding(self.item_num, self.embedding_dim).to(self.config["device"])
 
         self.hidden_units = [self.embedding_dim] + self.hidden_units
-
+        self.f = nn.Sigmoid()
+        self.bpr_loss = BPRLoss()
+        self.reg_loss = L2RegLoss(self.lmbd_reg, self.config['batch_size'])
+        self.infonce_loss = InfoNCELoss(self.cl_tau)
+        self.init_generate_sub_graph()
         self.apply(self.init_weights)
+
+    def init_generate_sub_graph(self):
+        train_data = self.config["data_dict"]["train_df"][["user_id", "item_id"]].values
+        self.n_nodes = self.user_num + self.item_num
+        self.users_np = np.array([i[0] for i in train_data])
+        self.items_np = np.array([i[1] for i in train_data])
 
     def init_weights(self, module: nn.Module):
         if isinstance(module, nn.Embedding):
@@ -48,47 +74,59 @@ class SGL(nn.Module):
             if module.bias is not None:
                 nn.init.constant_(module.bias.data, 0)
 
-    def node_dropout(self, g, dropout_ratio):
-        keep_prob = 1.0 - dropout_ratio
-        size = g.size()
-        indices = g.indices()
-        values = g.values()
+    def node_dropout(self, dropout_ratio):
+        drop_user_idx = np.random.choice(self.user_num, size=int(self.user_num * dropout_ratio), replace=False)
+        drop_item_idx = np.random.choice(self.item_num, size=int(self.item_num * dropout_ratio), replace=False)
+        indicator_user = np.ones(self.user_num, dtype=np.float32)
+        indicator_item = np.ones(self.item_num, dtype=np.float32)
+        indicator_user[drop_user_idx] = 0.
+        indicator_item[drop_item_idx] = 0.
+        diag_indicator_user = sp.diags(indicator_user)
+        diag_indicator_item = sp.diags(indicator_item)
+        R = sp.csr_matrix((np.ones_like(self.users_np, dtype=np.float32), (self.users_np, self.items_np)), shape=(self.user_num, self.item_num))
+        R_prime = diag_indicator_user.dot(R).dot(diag_indicator_item)
+        (user_np_keep, item_np_keep) = R_prime.nonzero()
+        ratings_keep = R_prime.data
+        tmp_adj = sp.csr_matrix((ratings_keep, (user_np_keep, item_np_keep + self.user_num)), shape=(self.n_nodes, self.n_nodes))
+        return tmp_adj
 
-        num_nodes = size[0]
-        keep_mask = torch.ones(num_nodes, dtype=torch.bool)
-        drop_mask = torch.rand(num_nodes) < dropout_ratio
-        keep_mask[drop_mask] = False
+    def edge_dropout(self, dropout_ratio):
+        keep_idx = np.random.choice(len(self.users_np), size=int(len(self.users_np) * (1 - dropout_ratio)), replace=False)
+        user_np = np.array(self.users_np)[keep_idx]
+        item_np = np.array(self.items_np)[keep_idx]
+        ratings = np.ones_like(user_np, dtype=np.float32)
+        tmp_adj = sp.csr_matrix((ratings, (user_np, item_np + self.user_num)), shape=(self.n_nodes, self.n_nodes))
+        return tmp_adj
 
-        keep_edges_mask = keep_mask[indices[0]] & keep_mask[indices[1]]
-        new_indices = indices[:, keep_edges_mask]
-        new_values = values[keep_edges_mask] / keep_prob
-
-        updated_adj = torch.sparse_coo_tensor(new_indices, new_values, size)
-
-        return updated_adj
-
-    def edge_dropout(self, g, dropout_ratio):
-        keep_prob = 1.0 - dropout_ratio
-        size = g.size()
-        index = g.indices().t()
-        values = g.values()
-
-        random_index = torch.rand(len(values)) < keep_prob
-        index = index[random_index]
-        values = values[random_index] / keep_prob
-        g = torch.sparse_coo_tensor(index.t(), values, size)
-        return g
+    @time_middleware('生成增强图')
+    def create_sub_graph(self):
+        if self.aug_type in ['ED', 'RW']:
+            tmp_adj = self.edge_dropout(self.dropout_ratio)
+        elif self.aug_type == 'ND':
+            tmp_adj = self.node_dropout(self.dropout_ratio)
+        else:
+            raise ValueError('Augmentation type must be one of ED, ND, RW')
+        adj_mat = tmp_adj + tmp_adj.T
+        rowsum = np.array(adj_mat.sum(1))
+        rowsum = np.where(rowsum == 0, 1e-10, rowsum)
+        d_inv = np.power(rowsum, -0.5).flatten()
+        d_inv[np.isinf(d_inv)] = 0.
+        d_mat_inv = sp.diags(d_inv)
+        norm_adj_tmp = d_mat_inv.dot(adj_mat)
+        adj_matrix = norm_adj_tmp.dot(d_mat_inv)
+        coo = adj_matrix.tocoo().astype(np.float32)
+        indices = torch.from_numpy(np.asarray([coo.row, coo.col]))
+        new_g = torch.sparse_coo_tensor(indices, coo.data, coo.shape).coalesce()
+        new_g = new_g.to(self.config['device'])
+        return new_g
 
     def generation_augmented_graph(self):
-        if self.aug_type == 'ED':
-            self.sub_graph1 = [self.edge_dropout(self.g, self.dropout_ratio)] * self.num_layers
-            self.sub_graph2 = [self.edge_dropout(self.g, self.dropout_ratio)] * self.num_layers
-        elif self.aug_type == 'ND':
-            self.sub_graph1 = [self.node_dropout(self.g, self.dropout_ratio)] * self.num_layers
-            self.sub_graph2 = [self.node_dropout(self.g, self.dropout_ratio)] * self.num_layers
+        if self.aug_type in ['ED', 'ND']:
+            self.sub_graph1 = [self.create_sub_graph()] * self.num_layers
+            self.sub_graph2 = [self.create_sub_graph()] * self.num_layers
         elif self.aug_type == 'RW':
-            self.sub_graph1 = [self.edge_dropout(self.g, self.dropout_ratio) for _ in range(self.num_layers)]
-            self.sub_graph2 = [self.edge_dropout(self.g, self.dropout_ratio) for _ in range(self.num_layers)]
+            self.sub_graph1 = [self.create_sub_graph() for _ in range(self.num_layers)]
+            self.sub_graph2 = [self.create_sub_graph() for _ in range(self.num_layers)]
         else:
             raise ValueError('Augmentation type must be one of ED, ND, RW')
 
@@ -110,69 +148,17 @@ class SGL(nn.Module):
         final_user_embedding, final_item_embedding = torch.split(light_out, [self.user_num, self.item_num])
         return final_user_embedding, final_item_embedding
 
-    # def get_augmented_embedding(self, sub_graph):
-    #     user_embedding = self.user_embedding_layer.weight  # [user_num, embedding_dim]
-    #     item_embedding = self.item_embedding_layer.weight  # [item_num, embedding_dim]
-    #     all_emb = torch.cat([user_embedding, item_embedding])
-    #     embs = [all_emb]
-
-    #     for i in range(self.num_layers):
-    #         user_embedding, item_embedding = self.computer(sub_graph[i])
-    #         all_emb = torch.cat([user_embedding, item_embedding])
-    #         embs.append(all_emb)
-    #     embs = torch.stack(embs, dim=1)
-    #     light_out = torch.mean(embs, dim=1)
-    #     final_user_embedding, final_item_embedding = torch.split(light_out, [self.user_num, self.item_num])
-    #     return final_user_embedding, final_item_embedding
-
-    def create_bpr_loss(self, embedding_dict):
-        user_embedding, pos_item_embedding, neg_item_embedding = embedding_dict["user_embedding"], embedding_dict["pos_item_embedding"], embedding_dict["neg_item_embedding"]
-        pos_scores = (user_embedding * pos_item_embedding).sum(dim=1)
-        neg_scores = (user_embedding * neg_item_embedding).sum(dim=1)
-        bpr_loss = -torch.log(torch.sigmoid(pos_scores - neg_scores)).mean()
-        return bpr_loss
-
-    def create_regularization_loss(self, embedding_dict):
-        user_embedding_ego, pos_item_embedding_ego, neg_item_embedding_ego = embedding_dict["user_embedding_ego"], embedding_dict["pos_item_embedding_ego"], embedding_dict["neg_item_embedding_ego"]
-        reg_loss = (torch.norm(user_embedding_ego)**2 + torch.norm(pos_item_embedding_ego)**2 + torch.norm(neg_item_embedding_ego)**2) / (2 * user_embedding_ego.shape[0])
-        return reg_loss
-
-    def create_ssl_loss(self, data, sub_embedding_dict):
-        user_embedding1, item_embedding1, user_embedding2, item_embedding2 = get_values_by_keys(
-            data=sub_embedding_dict,
-            keys=[
-                "final_user_embedding1",
-                "final_item_embedding1",
-                "final_user_embedding2",
-                "final_item_embedding2",
-            ],
-        )
-        user_embeddings1 = F.normalize(user_embedding1, dim=1)
-        item_embeddings1 = F.normalize(item_embedding1, dim=1)
-        user_embeddings2 = F.normalize(user_embedding2, dim=1)
-        item_embeddings2 = F.normalize(item_embedding2, dim=1)
-
-        user_embs1 = F.embedding(data['user_id'], user_embeddings1)
-        item_embs1 = F.embedding(data['item_id'], item_embeddings1)
-        user_embs2 = F.embedding(data['user_id'], user_embeddings2)
-        item_embs2 = F.embedding(data['item_id'], item_embeddings2)
-
-        pos_ratings_user = torch.sum(user_embs1 * user_embs2, dim=1)
-        pos_ratings_item = torch.sum(item_embs1 * item_embs2, dim=1)
-        tot_ratings_user = torch.matmul(user_embs1, torch.transpose(user_embeddings2, 0, 1))
-        tot_ratings_item = torch.matmul(item_embs1, torch.transpose(item_embeddings2, 0, 1))
-
-        ssl_logits_user = tot_ratings_user - pos_ratings_user[:, None]
-        ssl_logits_item = tot_ratings_item - pos_ratings_item[:, None]
-        clogits_user = torch.logsumexp(ssl_logits_user / self.ssl_tau, dim=1)
-        clogits_item = torch.logsumexp(ssl_logits_item / self.ssl_tau, dim=1)
-        infonce_loss = torch.sum(clogits_user + clogits_item)
-        return infonce_loss
+    def create_infonce_loss(self, data, sub_embedding_dict):
+        u_idx = data['user_id']
+        i_idx = data['item_id']
+        user_cl_loss = self.infonce_loss(sub_embedding_dict["final_user_embedding1"][u_idx], sub_embedding_dict["final_user_embedding2"][u_idx])
+        item_cl_loss = self.infonce_loss(sub_embedding_dict["final_item_embedding1"][i_idx], sub_embedding_dict["final_item_embedding2"][i_idx])
+        return user_cl_loss + item_cl_loss
 
     def total_loss(self, data, embedding_dict, sub_embedding_dict):
-        bpr_loss = self.create_bpr_loss(embedding_dict)
-        reg_loss = self.create_regularization_loss(embedding_dict)
-        ssl_loss = self.create_ssl_loss(data, sub_embedding_dict)
+        bpr_loss = self.bpr_loss(embedding_dict["user_embedding"], embedding_dict["pos_item_embedding"], embedding_dict["neg_item_embedding"])
+        reg_loss = self.reg_loss(embedding_dict["user_embedding_ego"], embedding_dict["pos_item_embedding_ego"], embedding_dict["neg_item_embedding_ego"])
+        ssl_loss = self.create_infonce_loss(data, sub_embedding_dict)
         return bpr_loss + ssl_loss * self.lmbd_ssl + reg_loss * self.lmbd_reg
 
     def get_embedding(self, data, final_user_embedding, final_item_embedding):
@@ -187,22 +173,23 @@ class SGL(nn.Module):
 
     def forward(self, data, is_train=True):
         final_user_embedding, final_item_embedding = self.computer(self.g)
-        final_user_embedding1, final_item_embedding1 = self.computer(self.sub_graph1)
-        final_user_embedding2, final_item_embedding2 = self.computer(self.sub_graph2)
-        sub_embedding_dict = {
-            "final_user_embedding1": final_user_embedding1,
-            "final_item_embedding1": final_item_embedding1,
-            "final_user_embedding2": final_user_embedding2,
-            "final_item_embedding2": final_item_embedding2,
-        }
         output_dict = dict()
 
         if is_train:
+            final_user_embedding1, final_item_embedding1 = self.computer(self.sub_graph1)
+            final_user_embedding2, final_item_embedding2 = self.computer(self.sub_graph2)
+            sub_embedding_dict = {
+                "final_user_embedding1": final_user_embedding1,
+                "final_item_embedding1": final_item_embedding1,
+                "final_user_embedding2": final_user_embedding2,
+                "final_item_embedding2": final_item_embedding2,
+            }
             embedding_dict = self.get_embedding(
                 data,
                 final_user_embedding,
                 final_item_embedding,
             )
+
             loss = self.total_loss(data, embedding_dict, sub_embedding_dict)
             output_dict['loss'] = loss
         else:
